@@ -1,0 +1,12 @@
+person
+dog
+cat
+bird
+car
+bottle
+chair
+phone
+keyboard
+cup
+animal
+object

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "taurisight",
+  "productName": "TauriSight",
   "version": "0.1.0",
   "identifier": "com.no-tone.taurisight",
   "build": {
@@ -13,18 +13,20 @@
     "windows": [
       {
         "label": "main",
-        "title": "taurisight",
-        "width": 388,
-        "height": 388,
+        "title": "TauriSight",
+        "width": 340,
+        "height": 360,
         "visible": false,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "resizable": false,
-        "center": true
+        "center": true,
+        "dragDropEnabled": false
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     }
