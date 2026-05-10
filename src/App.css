@@ -66,9 +66,7 @@ kbd {
   overflow: hidden;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.13);
-  background:
-    linear-gradient(135deg, rgba(25, 27, 34, 0.93), rgba(16, 18, 24, 0.92) 54%, rgba(20, 25, 29, 0.93)),
-    linear-gradient(45deg, rgba(223, 120, 56, 0.18), rgba(54, 118, 179, 0.2) 52%, rgba(62, 160, 119, 0.14));
+  background: rgba(22, 24, 30, 0.96);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 18px 38px rgba(0, 0, 0, 0.34);
@@ -76,6 +74,7 @@ kbd {
 }
 
 .dropzone {
+  position: relative;
   height: 96px;
   border-radius: 7px;
   border: 1px dashed rgba(255, 255, 255, 0.13);
@@ -83,7 +82,6 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   color: rgba(246, 247, 249, 0.78);
   font-size: 0.84rem;
   transition:
@@ -92,10 +90,47 @@ kbd {
     color 0.16s ease;
 }
 
+.dropzone-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 92%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .dropzone-active {
   border-color: rgba(116, 188, 255, 0.78);
   background: rgba(75, 149, 224, 0.18);
   color: #ffffff;
+}
+
+.dropzone-busy {
+  border-color: rgba(116, 188, 255, 0.42);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.drop-progress {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.drop-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(116, 188, 255, 0.9);
+  transition: width 0.18s ease;
 }
 
 .dropzone-reject {
@@ -141,6 +176,59 @@ kbd {
   height: 1px;
   margin: 5px 0;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.recent-preview {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+.recent-preview:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.preview-label {
+  color: rgba(246, 247, 249, 0.44);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.preview-name {
+  overflow: hidden;
+  color: rgba(246, 247, 249, 0.72);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(246, 247, 249, 0.28);
+}
+
+.dot-queued,
+.dot-uploading,
+.dot-analyzing {
+  background: rgba(116, 188, 255, 0.9);
+}
+
+.dot-done {
+  background: rgba(117, 218, 166, 0.92);
+}
+
+.dot-error {
+  background: rgba(255, 126, 126, 0.9);
 }
 
 .back-button {
@@ -228,6 +316,7 @@ kbd {
   padding: 9px;
   display: grid;
   gap: 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .result-top {
@@ -253,6 +342,11 @@ kbd {
 
 .status-done {
   color: rgba(117, 218, 166, 0.92);
+}
+
+.status-uploading,
+.status-analyzing {
+  color: rgba(116, 188, 255, 0.9);
 }
 
 .status-error,
@@ -309,13 +403,31 @@ kbd {
   overflow-wrap: anywhere;
 }
 
+.about-panel h2,
+.about-panel h3 {
+  margin: 0;
+}
+
+.about-panel h2 {
+  font-size: 1.05rem;
+}
+
+.about-panel h3 {
+  padding-top: 5px;
+  color: rgba(246, 247, 249, 0.88);
+  font-size: 0.9rem;
+}
+
+.md-bullet {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
 @media (prefers-color-scheme: light) {
   .app {
     color: #151820;
     border-color: rgba(0, 0, 0, 0.1);
-    background:
-      linear-gradient(135deg, rgba(250, 251, 253, 0.94), rgba(232, 236, 242, 0.9) 54%, rgba(224, 233, 235, 0.92)),
-      linear-gradient(45deg, rgba(223, 120, 56, 0.14), rgba(54, 118, 179, 0.16) 52%, rgba(62, 160, 119, 0.12));
+    background: rgba(242, 244, 247, 0.96);
   }
 
   button:disabled,
@@ -336,12 +448,14 @@ kbd {
   .empty,
   .result-card,
   .about-panel p,
+  .recent-preview,
   .count {
     border-color: rgba(0, 0, 0, 0.08);
     background: rgba(255, 255, 255, 0.52);
   }
 
   .menu-item:not(:disabled):hover,
+  .recent-preview:hover,
   .close-button:hover,
   .back-button {
     background: rgba(0, 0, 0, 0.06);

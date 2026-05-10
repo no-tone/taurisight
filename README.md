@@ -4,11 +4,11 @@ This template should help get you started developing with Tauri, React and Types
 
 ## TauriSight
 
-Tray-style image analysis shell for TensorFlow inference.
+Tray-style image analysis shell for TensorFlow.js object detection.
 
-Put a TensorFlow frozen graph at `src-tauri/models/vision_model.pb` if you want real inference. No model yet, app falls back to demo detections so UI still works.
+The app uses Coco SSD (`@tensorflow-models/coco-ssd`) in the React webview. Images stay local in the app process; Rust handles tray/window behavior only.
 
-Main window starts hidden, lives in tray, and opens on tray click.
+Main window starts hidden, lives in tray, and opens on tray click. First analysis loads the TensorFlow.js model, later analyses reuse it.
 
 ## Recommended IDE Setup
 

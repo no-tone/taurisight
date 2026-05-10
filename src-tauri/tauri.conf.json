@@ -15,7 +15,7 @@
         "label": "main",
         "title": "TauriSight",
         "width": 340,
-        "height": 360,
+        "height": 375,
         "visible": false,
         "decorations": false,
         "transparent": true,
