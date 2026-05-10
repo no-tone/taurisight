@@ -1,6 +1,8 @@
-# TauriSight
+## Resumé
 
 Local tray utility for image object detection.
+
+Made by [no-tone](https://no-tone.com).
 
 ## Model
 

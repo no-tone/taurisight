@@ -103,13 +103,13 @@ kbd {
 }
 
 .dropzone-active {
-  border-color: rgba(116, 188, 255, 0.78);
-  background: rgba(75, 149, 224, 0.18);
+  border-color: rgba(246, 247, 249, 0.46);
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
 
 .dropzone-busy {
-  border-color: rgba(116, 188, 255, 0.42);
+  border-color: rgba(246, 247, 249, 0.3);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -129,7 +129,7 @@ kbd {
   width: 0;
   height: 100%;
   border-radius: inherit;
-  background: rgba(116, 188, 255, 0.9);
+  background: rgba(246, 247, 249, 0.88);
   transition: width 0.18s ease;
 }
 
@@ -418,6 +418,20 @@ kbd {
   font-size: 0.9rem;
 }
 
+.text-link {
+  display: inline;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(246, 247, 249, 0.92);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.text-link:hover {
+  color: #ffffff;
+}
+
 .md-bullet {
   padding-top: 6px;
   padding-bottom: 6px;
@@ -459,5 +473,31 @@ kbd {
   .close-button:hover,
   .back-button {
     background: rgba(0, 0, 0, 0.06);
+  }
+
+  .dropzone-active {
+    border-color: rgba(21, 24, 32, 0.28);
+    background: rgba(0, 0, 0, 0.05);
+    color: #151820;
+  }
+
+  .dropzone-busy {
+    border-color: rgba(21, 24, 32, 0.2);
+  }
+
+  .drop-progress {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .drop-progress span {
+    background: rgba(21, 24, 32, 0.82);
+  }
+
+  .text-link {
+    color: rgba(21, 24, 32, 0.88);
+  }
+
+  .text-link:hover {
+    color: #151820;
   }
 }

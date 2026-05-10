@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useDropzone } from "react-dropzone";
 import "./App.css";
 
@@ -50,11 +51,14 @@ function App() {
   const modelRef = useRef<CocoModel | null>(null);
 
   const setTrayProgress = useCallback((active: boolean, progress: number, label: string) => {
+    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
     invoke("update_tray_progress", {
       progress: {
         active,
         progress: Math.round(progress),
         label,
+        dark,
       },
     }).catch(() => {});
   }, []);
@@ -67,9 +71,11 @@ function App() {
     const [tf, cocoSsd] = await Promise.all([
       import("@tensorflow/tfjs"),
       import("@tensorflow-models/coco-ssd"),
+    ]);
+    await Promise.all([
       import("@tensorflow/tfjs-backend-cpu"),
       import("@tensorflow/tfjs-backend-webgl"),
-    ]).then(([tfModule, cocoModule]) => [tfModule, cocoModule] as const);
+    ]);
 
     await tf.setBackend("webgl").catch(() => tf.setBackend("cpu"));
     await tf.ready();
@@ -318,15 +324,19 @@ function App() {
               shortcut={clipboardShortcut}
               onClick={handleClipboard}
             />
-            <RecentPreview item={latestItem} onOpen={() => setView("recent")} />
-
-            <div className="separator" />
 
             <MenuButton
               label="Recent uploads"
               shortcut={recentShortcut}
               onClick={() => setView("recent")}
             />
+
+            <div className="separator" />
+
+            <RecentPreview item={latestItem} onOpen={() => setView("recent")} />
+
+            <div className="separator" />
+
             <MenuButton label="About TauriSight..." onClick={() => setView("about")} />
             <MenuButton label="Check for updates" disabled />
 
@@ -465,23 +475,82 @@ function ResultCard({
 function renderMarkdown(markdown: string) {
   return markdown.split("\n").map((line, index) => {
     if (line.startsWith("# ")) {
-      return <h2 key={index}>{line.slice(2)}</h2>;
+      return <h2 key={index}>{renderInlineMarkdown(line.slice(2))}</h2>;
     }
 
     if (line.startsWith("## ")) {
-      return <h3 key={index}>{line.slice(3)}</h3>;
+      return <h3 key={index}>{renderInlineMarkdown(line.slice(3))}</h3>;
     }
 
     if (line.startsWith("- ")) {
-      return <p key={index} className="md-bullet">• {line.slice(2)}</p>;
+      return (
+        <p key={index} className="md-bullet">
+          • {renderInlineMarkdown(line.slice(2))}
+        </p>
+      );
     }
 
     if (!line.trim()) {
       return null;
     }
 
-    return <p key={index}>{line}</p>;
+    return <p key={index}>{renderInlineMarkdown(line)}</p>;
   });
+}
+
+function renderInlineMarkdown(text: string) {
+  const segments: ReactNode[] = [];
+  const pattern = /(\[[^\]]+\]\([^)]+\)|`[^`]+`)/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > cursor) {
+      segments.push(text.slice(cursor, match.index));
+    }
+
+    const token = match[0];
+    const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+
+    if (linkMatch) {
+      const [, label, href] = linkMatch;
+      const safeHref = safeExternalUrl(href);
+
+      segments.push(
+        safeHref ? (
+          <button
+            className="text-link"
+            key={`${match.index}-${href}`}
+            type="button"
+            onClick={() => openUrl(safeHref)}
+          >
+            {label}
+          </button>
+        ) : (
+          label
+        ),
+      );
+    } else if (token.startsWith("`") && token.endsWith("`")) {
+      segments.push(<code key={match.index}>{token.slice(1, -1)}</code>);
+    }
+
+    cursor = match.index + token.length;
+  }
+
+  if (cursor < text.length) {
+    segments.push(text.slice(cursor));
+  }
+
+  return segments.length > 0 ? segments : text;
+}
+
+function safeExternalUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    return ["https:", "http:", "mailto:"].includes(parsed.protocol) ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function loadImage(src: string) {

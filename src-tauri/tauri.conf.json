@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "TauriSight",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.no-tone.taurisight",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -15,7 +15,7 @@
         "label": "main",
         "title": "TauriSight",
         "width": 340,
-        "height": 375,
+        "height": 415,
         "visible": false,
         "decorations": false,
         "transparent": true,
@@ -28,7 +28,7 @@
     ],
     "macOSPrivateApi": true,
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; connect-src 'self' https://storage.googleapis.com https://tfhub.dev; img-src 'self' asset: http://asset.localhost blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; worker-src 'self' blob:"
     }
   },
   "bundle": {

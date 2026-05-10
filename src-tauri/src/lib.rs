@@ -20,6 +20,7 @@ const TRAY_RECENT_ID: &str = "tray-recent";
 const TRAY_ABOUT_ID: &str = "tray-about";
 const TRAY_SETTINGS_ID: &str = "tray-settings";
 const TRAY_QUIT_ID: &str = "tray-quit";
+const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/32x32.png");
 
 type AnyResult<T> = anyhow::Result<T>;
 
@@ -28,6 +29,7 @@ struct TrayProgress {
     active: bool,
     progress: u8,
     label: String,
+    dark: bool,
 }
 
 #[tauri::command]
@@ -51,7 +53,7 @@ fn update_tray_progress(app: AppHandle, progress: TrayProgress) -> std::result::
     };
 
     if progress.active {
-        let icon = progress_icon(progress.progress);
+        let icon = progress_icon(progress.progress, progress.dark);
         tray.set_icon_with_as_template(Some(icon), false)
             .map_err(|error| error.to_string())?;
         tray.set_tooltip(Some(format!(
@@ -105,32 +107,46 @@ fn emit_to_panel(app: &AppHandle, event: &str) {
     let _ = app.emit(event, ());
 }
 
-fn progress_icon(progress: u8) -> Image<'static> {
-    let size = 32usize;
-    let mut rgba = vec![0u8; size * size * 4];
-    let fill = ((progress.min(100) as usize) * 24 / 100).max(1);
+fn progress_icon(progress: u8, dark: bool) -> Image<'static> {
+    let size = 32u32;
+    let mut image = ::image::load_from_memory(TRAY_ICON_BYTES)
+        .map(|image| image.resize_exact(size, size, ::image::imageops::FilterType::Lanczos3))
+        .map(|image| image.to_rgba8())
+        .unwrap_or_else(|_| ::image::RgbaImage::new(size, size));
+    let fill = ((progress.min(100) as u32) * 24 / 100).max(1);
+    let tint = if dark { [246, 247, 249] } else { [18, 20, 24] };
+    let track = if dark {
+        [246, 247, 249, 72]
+    } else {
+        [18, 20, 24, 72]
+    };
+    let bar = if dark {
+        [246, 247, 249, 255]
+    } else {
+        [18, 20, 24, 255]
+    };
 
-    for y in 7..25 {
-        for x in 8..24 {
-            let idx = (y * size + x) * 4;
-            rgba[idx] = 246;
-            rgba[idx + 1] = 247;
-            rgba[idx + 2] = 249;
-            rgba[idx + 3] = 230;
+    for pixel in image.pixels_mut() {
+        if pixel[3] > 0 {
+            pixel[0] = tint[0];
+            pixel[1] = tint[1];
+            pixel[2] = tint[2];
         }
     }
 
-    for y in 25..29 {
+    for y in 27..30 {
+        for x in 4..28 {
+            image.put_pixel(x, y, ::image::Rgba(track));
+        }
+    }
+
+    for y in 27..30 {
         for x in 4..(4 + fill) {
-            let idx = (y * size + x) * 4;
-            rgba[idx] = 92;
-            rgba[idx + 1] = 174;
-            rgba[idx + 2] = 255;
-            rgba[idx + 3] = 255;
+            image.put_pixel(x, y, ::image::Rgba(bar));
         }
     }
 
-    Image::new_owned(rgba, size as u32, size as u32)
+    Image::new_owned(image.into_raw(), size, size)
 }
 
 fn position_window_near_tray(window: &tauri::WebviewWindow, rect: tauri::Rect) -> AnyResult<()> {
