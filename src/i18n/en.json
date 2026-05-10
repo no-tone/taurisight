@@ -1,0 +1,67 @@
+{
+  "dropzone": {
+    "idle": "Drag files here...",
+    "release": "Release to analyze",
+    "drop": "Drop to analyze",
+    "unsupported": "Only images, MP4, or MOV supported",
+    "needsFolder": "Choose export folder in Settings first",
+    "uploading": "Uploading",
+    "analyzing": "Analyzing"
+  },
+  "menu": {
+    "selectFile": "Select file",
+    "clipboard": "Upload from clipboard",
+    "recents": "Recent uploads",
+    "about": "About TauriSight...",
+    "updates": "Check for updates",
+    "settings": "Settings",
+    "quit": "Quit"
+  },
+  "recents": {
+    "title": "Recent uploads",
+    "empty": "No processed files yet.",
+    "latest": "Latest",
+    "noUploads": "No uploads yet",
+    "exported": "Exported",
+    "missingExport": "Export missing or moved.",
+    "noDetections": "No confident detections.",
+    "reveal": "Reveal exported file",
+    "remove": "Remove item",
+    "expand": "Expand item",
+    "collapse": "Collapse item"
+  },
+  "settings": {
+    "title": "Settings",
+    "exportFolder": "Export folder",
+    "required": "Required before analysis",
+    "choose": "Choose",
+    "videoExport": "Preferred video export",
+    "videoNote": "WebM default. MP4/MOV need WebView encoder support.",
+    "language": "Language",
+    "english": "English",
+    "portuguese": "Portuguese"
+  },
+  "about": {
+    "title": "About"
+  },
+  "status": {
+    "queued": "Queued",
+    "uploading": "Uploading",
+    "analyzing": "Analyzing",
+    "failed": "Failed",
+    "noObject": "No object found"
+  },
+  "errors": {
+    "aboutUnavailable": "About file unavailable.",
+    "clipboardUnavailable": "Clipboard image unavailable.",
+    "mediaFailed": "Failed to analyze media.",
+    "videoDuration": "Video duration unavailable.",
+    "videoTooLong": "Video too long. Max {seconds}s for safe local export.",
+    "videoExportUnavailable": "Video export unavailable in this webview.",
+    "videoFormatUnavailable": "{format} export unavailable in this webview.",
+    "canvasUnavailable": "Canvas unavailable.",
+    "exportRenderFailed": "Export render failed.",
+    "imageDecodeFailed": "Image decode failed.",
+    "videoDecodeFailed": "Video decode failed. This file codec may not be supported by the system WebView."
+  }
+}

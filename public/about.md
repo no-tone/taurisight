@@ -1,4 +1,4 @@
-## Resumé
+## Resume
 
 Local tray utility for image object detection.
 

@@ -1,5 +1,11 @@
 use anyhow::{anyhow, Context};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -21,6 +27,8 @@ const TRAY_ABOUT_ID: &str = "tray-about";
 const TRAY_SETTINGS_ID: &str = "tray-settings";
 const TRAY_QUIT_ID: &str = "tray-quit";
 const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/32x32.png");
+const SETTINGS_FILE: &str = "settings.json";
+const MAX_EXPORT_BYTES: usize = 500 * 1024 * 1024;
 
 type AnyResult<T> = anyhow::Result<T>;
 
@@ -30,6 +38,38 @@ struct TrayProgress {
     progress: u8,
     label: String,
     dark: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct AppSettings {
+    export_folder: Option<PathBuf>,
+    #[serde(default = "default_video_export")]
+    preferred_video_export: String,
+    #[serde(default = "default_language")]
+    language: String,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            export_folder: None,
+            preferred_video_export: default_video_export(),
+            language: default_language(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct SavedExport {
+    path: String,
+    name: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ClientSettings {
+    export_folder: Option<String>,
+    preferred_video_export: String,
+    language: String,
 }
 
 #[tauri::command]
@@ -72,6 +112,130 @@ fn update_tray_progress(app: AppHandle, progress: TrayProgress) -> std::result::
     Ok(())
 }
 
+#[tauri::command]
+fn get_export_folder(app: AppHandle) -> std::result::Result<Option<String>, String> {
+    read_settings(&app)
+        .map(|settings| {
+            settings
+                .export_folder
+                .filter(|path| path.is_dir())
+                .map(|path| path.to_string_lossy().to_string())
+        })
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn get_settings(app: AppHandle) -> std::result::Result<ClientSettings, String> {
+    read_settings(&app)
+        .map(|settings| ClientSettings {
+            export_folder: settings
+                .export_folder
+                .filter(|path| path.is_dir())
+                .map(|path| path.to_string_lossy().to_string()),
+            preferred_video_export: safe_video_export(&settings.preferred_video_export)
+                .unwrap_or_else(|_| default_video_export()),
+            language: safe_language(&settings.language).unwrap_or_else(|_| default_language()),
+        })
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn update_preferences(
+    app: AppHandle,
+    preferred_video_export: String,
+    language: String,
+) -> std::result::Result<ClientSettings, String> {
+    let mut settings = read_settings(&app).map_err(|error| error.to_string())?;
+    settings.preferred_video_export = safe_video_export(&preferred_video_export)?;
+    settings.language = safe_language(&language)?;
+    write_settings(&app, &settings).map_err(|error| error.to_string())?;
+    get_settings(app)
+}
+
+#[tauri::command]
+fn choose_export_folder(app: AppHandle) -> std::result::Result<Option<String>, String> {
+    let Some(folder) = rfd::FileDialog::new()
+        .set_title("Choose export folder")
+        .pick_folder()
+    else {
+        return Ok(None);
+    };
+
+    if !folder.is_dir() {
+        return Err("Selected path is not a folder.".into());
+    }
+
+    let mut settings = read_settings(&app).map_err(|error| error.to_string())?;
+    settings.export_folder = Some(folder.clone());
+    write_settings(&app, &settings).map_err(|error| error.to_string())?;
+
+    Ok(Some(folder.to_string_lossy().to_string()))
+}
+
+#[tauri::command]
+fn export_file_exists(app: AppHandle, path: String) -> std::result::Result<bool, String> {
+    let root = configured_export_folder(&app).map_err(|error| error.to_string())?;
+    let root = root.canonicalize().map_err(|error| error.to_string())?;
+    let target = PathBuf::from(path);
+
+    if !target.exists() {
+        return Ok(false);
+    }
+
+    let target = target.canonicalize().map_err(|error| error.to_string())?;
+    if !target.starts_with(&root) {
+        return Ok(false);
+    }
+
+    Ok(target.is_file())
+}
+
+#[tauri::command]
+fn save_export_file(
+    app: AppHandle,
+    original_name: String,
+    extension: String,
+    bytes: Vec<u8>,
+) -> std::result::Result<SavedExport, String> {
+    if bytes.is_empty() {
+        return Err("Export is empty.".into());
+    }
+    if bytes.len() > MAX_EXPORT_BYTES {
+        return Err("Export too large.".into());
+    }
+
+    let folder = configured_export_folder(&app).map_err(|error| error.to_string())?;
+    let extension = safe_extension(&extension)?;
+    let stem = safe_file_stem(&original_name);
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| error.to_string())?
+        .as_millis();
+    let name = format!("{stem}_taurisight_{timestamp}.{extension}");
+    let path = folder.join(&name);
+
+    fs::write(&path, bytes).map_err(|error| error.to_string())?;
+
+    Ok(SavedExport {
+        path: path.to_string_lossy().to_string(),
+        name,
+    })
+}
+
+#[tauri::command]
+fn reveal_exported_file(app: AppHandle, path: String) -> std::result::Result<(), String> {
+    let root = configured_export_folder(&app).map_err(|error| error.to_string())?;
+    let root = root.canonicalize().map_err(|error| error.to_string())?;
+    let target = PathBuf::from(path);
+    let target = target.canonicalize().map_err(|error| error.to_string())?;
+
+    if !target.starts_with(&root) {
+        return Err("Export path is outside configured folder.".into());
+    }
+
+    reveal_path(&target).map_err(|error| error.to_string())
+}
+
 fn show_main_window(app: &AppHandle, anchor: Option<tauri::Rect>) -> AnyResult<()> {
     if let Some(window) = app.get_webview_window(WINDOW_LABEL) {
         if let Some(rect) = anchor {
@@ -105,6 +269,131 @@ fn show_about(app: &AppHandle) {
 fn emit_to_panel(app: &AppHandle, event: &str) {
     let _ = show_main_window(app, None);
     let _ = app.emit(event, ());
+}
+
+fn settings_path(app: &AppHandle) -> AnyResult<PathBuf> {
+    let dir = app
+        .path()
+        .app_config_dir()
+        .context("failed to resolve app config dir")?;
+    fs::create_dir_all(&dir).context("failed to create app config dir")?;
+    Ok(dir.join(SETTINGS_FILE))
+}
+
+fn read_settings(app: &AppHandle) -> AnyResult<AppSettings> {
+    let path = settings_path(app)?;
+    if !path.exists() {
+        return Ok(AppSettings::default());
+    }
+
+    let data = fs::read_to_string(path).context("failed to read settings")?;
+    serde_json::from_str(&data).context("failed to parse settings")
+}
+
+fn write_settings(app: &AppHandle, settings: &AppSettings) -> AnyResult<()> {
+    let path = settings_path(app)?;
+    let data = serde_json::to_string_pretty(settings).context("failed to serialize settings")?;
+    fs::write(path, data).context("failed to write settings")
+}
+
+fn configured_export_folder(app: &AppHandle) -> AnyResult<PathBuf> {
+    let settings = read_settings(app)?;
+    let folder = settings
+        .export_folder
+        .ok_or_else(|| anyhow!("Export folder not configured."))?;
+    if !folder.is_dir() {
+        return Err(anyhow!("Export folder missing."));
+    }
+
+    Ok(folder)
+}
+
+fn default_video_export() -> String {
+    "webm".into()
+}
+
+fn default_language() -> String {
+    "en".into()
+}
+
+fn safe_video_export(value: &str) -> std::result::Result<String, String> {
+    match value.to_lowercase().as_str() {
+        "webm" => Ok("webm".into()),
+        "mp4" => Ok("mp4".into()),
+        "mov" => Ok("mov".into()),
+        _ => Err("Unsupported video export type.".into()),
+    }
+}
+
+fn safe_language(value: &str) -> std::result::Result<String, String> {
+    match value.to_lowercase().as_str() {
+        "en" => Ok("en".into()),
+        "pt" => Ok("pt".into()),
+        _ => Err("Unsupported language.".into()),
+    }
+}
+
+fn safe_extension(extension: &str) -> std::result::Result<&'static str, String> {
+    match extension.to_lowercase().as_str() {
+        "png" => Ok("png"),
+        "webm" => Ok("webm"),
+        "mp4" => Ok("mp4"),
+        "mov" => Ok("mov"),
+        _ => Err("Unsupported export extension.".into()),
+    }
+}
+
+fn safe_file_stem(name: &str) -> String {
+    let stem = Path::new(name)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("export");
+    let mut clean = String::with_capacity(stem.len().min(80));
+
+    for ch in stem.chars().take(80) {
+        if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | ' ') {
+            clean.push(ch);
+        } else {
+            clean.push('_');
+        }
+    }
+
+    let clean = clean.trim_matches([' ', '.', '_', '-']);
+    if clean.is_empty() {
+        "export".into()
+    } else {
+        clean.into()
+    }
+}
+
+fn reveal_path(path: &Path) -> AnyResult<()> {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg("-R")
+            .arg(path)
+            .spawn()
+            .context("failed to reveal export")?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer")
+            .arg(format!("/select,{}", path.display()))
+            .spawn()
+            .context("failed to reveal export")?;
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let folder = path.parent().unwrap_or(path);
+        Command::new("xdg-open")
+            .arg(folder)
+            .spawn()
+            .context("failed to reveal export")?;
+    }
+
+    Ok(())
 }
 
 fn progress_icon(progress: u8, dark: bool) -> Image<'static> {
@@ -259,7 +548,7 @@ pub fn run() {
                         app,
                         TRAY_SETTINGS_ID,
                         "Settings",
-                        false,
+                        true,
                         Some("CmdOrCtrl+,"),
                     )?,
                     &PredefinedMenuItem::separator(app)?,
@@ -292,6 +581,9 @@ pub fn run() {
                     }
                     TRAY_ABOUT_ID => {
                         show_about(app);
+                    }
+                    TRAY_SETTINGS_ID => {
+                        emit_to_panel(app, "show-settings");
                     }
                     TRAY_QUIT_ID => {
                         app.exit(0);
@@ -333,7 +625,14 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             hide_main_window,
             quit_app,
-            update_tray_progress
+            update_tray_progress,
+            get_export_folder,
+            get_settings,
+            update_preferences,
+            choose_export_folder,
+            export_file_exists,
+            save_export_file,
+            reveal_exported_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

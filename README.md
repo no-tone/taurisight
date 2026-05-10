@@ -10,11 +10,15 @@ Made by [no-tone](https://no-tone.com).
 
 - Tray-only desktop behavior with the main window hidden until the tray icon is clicked.
 - Compact dark/light native-style interface for macOS and Windows.
-- Drag-and-drop image dropzone with file picker and clipboard image import.
+- Drag-and-drop media dropzone with file picker, clipboard image import, image support, and short MP4/MOV video support.
 - Uploading and analyzing states with inline progress in the dropzone.
 - TensorFlow.js Coco SSD object detection for 80 common object classes.
 - Local image analysis inside the app webview; no custom upload server.
-- Recent uploads page with status, confidence scores, dimensions, and removable entries.
+- Annotated image/video export to a user-selected local folder.
+- Required first-run export folder setting with guarded writes from Rust.
+- Recent uploads page with expandable entries, status, confidence scores, dimensions, exported filename, reveal-in-Finder/File Explorer, and removable entries.
+- Export existence check, so moved/deleted exports are shown as missing instead of silently failing.
+- Settings for preferred video export format and UI language (`en`/`pt`).
 - Latest upload preview in the main tray panel.
 - Tauri tray menu with select file, clipboard upload, recent uploads, about, settings placeholder, and quit.
 - Dynamic tray progress icon using the app icon plus a theme-aware progress bar.
@@ -25,6 +29,7 @@ Made by [no-tone](https://no-tone.com).
 
 - `src/App.tsx`: main React UI, file handling, clipboard import, and TensorFlow.js analysis.
 - `src/App.css`: compact native-style UI theme and responsive dark/light styling.
+- `src/i18n/`: frontend translations for supported UI languages.
 - `public/about.md`: Markdown content shown in the in-app About panel.
 - `src-tauri/src/lib.rs`: Tauri tray, window positioning, dock/taskbar behavior, and tray progress icon.
 - `src-tauri/tauri.conf.json`: Tauri app, security, window, and bundle configuration.
@@ -56,8 +61,8 @@ pnpm tauri build
 Automatic GitHub releases run when a version tag is pushed.
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 The workflow can also be started manually from GitHub Actions with `workflow_dispatch`.
@@ -65,6 +70,8 @@ The workflow can also be started manually from GitHub Actions with `workflow_dis
 ## Notes
 
 - The first analysis downloads and loads the Coco SSD model, so it can take longer than later runs.
+- Video export uses browser `MediaRecorder`; output is WebM for broad local browser support.
+- Long videos are capped for safe local processing.
 - Image files are decoded locally in the Tauri webview and are not sent to a project backend.
 - Coco SSD model assets are fetched from TensorFlow-hosted storage at runtime.
 - Clipboard image import depends on operating system and webview permissions.

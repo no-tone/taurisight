@@ -1,0 +1,67 @@
+{
+  "dropzone": {
+    "idle": "Arraste ficheiros aqui...",
+    "release": "Solte para analisar",
+    "drop": "Solte para analisar",
+    "unsupported": "Apenas imagens, MP4 ou MOV",
+    "needsFolder": "Escolha pasta de exportação nas Definições",
+    "uploading": "A carregar",
+    "analyzing": "A analisar"
+  },
+  "menu": {
+    "selectFile": "Selecionar ficheiro",
+    "clipboard": "Carregar da área de transferência",
+    "recents": "Uploads recentes",
+    "about": "Sobre o TauriSight",
+    "updates": "Verificar atualizações",
+    "settings": "Definições",
+    "quit": "Sair"
+  },
+  "recents": {
+    "title": "Uploads recentes",
+    "empty": "Ainda sem ficheiros processados.",
+    "latest": "Mais recente",
+    "noUploads": "Sem envios",
+    "exported": "Exportado",
+    "missingExport": "Exportação em falta ou movida.",
+    "noDetections": "Sem deteções confiáveis.",
+    "reveal": "Abrir ficheiro exportado",
+    "remove": "Remover item",
+    "expand": "Expandir item",
+    "collapse": "Fechar item"
+  },
+  "settings": {
+    "title": "Definições",
+    "exportFolder": "Pasta de exportação",
+    "required": "Obrigatória antes da análise",
+    "choose": "Escolher",
+    "videoExport": "Formato preferido de vídeo",
+    "videoNote": "WebM por defeito. MP4/MOV necessitam de suporte do codificador na WebView.",
+    "language": "Idioma",
+    "english": "Inglês",
+    "portuguese": "Português"
+  },
+  "about": {
+    "title": "Sobre"
+  },
+  "status": {
+    "queued": "À espera",
+    "uploading": "A carregar",
+    "analyzing": "A analisar",
+    "failed": "Falhou",
+    "noObject": "Nenhum objeto encontrado"
+  },
+  "errors": {
+    "aboutUnavailable": "Ficheiro About indisponível.",
+    "clipboardUnavailable": "Imagem da área de transferência indisponível.",
+    "mediaFailed": "Falha ao analisar ficheiro.",
+    "videoDuration": "Duração do vídeo indisponível.",
+    "videoTooLong": "Vídeo demasiado longo. Máximo {seconds}s para exportação local segura.",
+    "videoExportUnavailable": "Exportação de vídeo indisponível nesta WebView.",
+    "videoFormatUnavailable": "Exportação {format} indisponível nesta WebView.",
+    "canvasUnavailable": "Canvas indisponível.",
+    "exportRenderFailed": "Falha ao renderizar exportação.",
+    "imageDecodeFailed": "Falha ao descodificar imagem.",
+    "videoDecodeFailed": "Falha ao descodificar vídeo. O codec do ficheiro pode não ser suportado pela WebView do sistema."
+  }
+}

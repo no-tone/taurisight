@@ -138,6 +138,12 @@ kbd {
   background: rgba(145, 42, 42, 0.18);
 }
 
+.dropzone-needs-folder {
+  border-color: rgba(255, 112, 112, 0.78);
+  background: rgba(145, 42, 42, 0.16);
+  color: rgba(255, 210, 117, 0.95);
+}
+
 .drop-icon {
   font-size: 0.9rem;
   transform: translateY(-1px);
@@ -165,6 +171,31 @@ kbd {
 
 .menu-item:not(:disabled):hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.warn-badge {
+  width: 16px;
+  height: 16px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 196, 86, 0.22);
+  color: rgba(255, 211, 128, 0.98);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.warn-badge.large {
+  width: 24px;
+  height: 24px;
+  font-size: 0.9rem;
 }
 
 kbd {
@@ -233,7 +264,7 @@ kbd {
 
 .back-button {
   position: absolute;
-  top: 8px;
+  top: 12px;
   right: 8px;
   z-index: 2;
   width: 28px;
@@ -278,9 +309,12 @@ kbd {
 }
 
 .count {
-  min-width: 26px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
   border-radius: 7px;
-  padding: 2px 7px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.08);
   text-align: center;
   color: rgba(246, 247, 249, 0.78);
@@ -288,7 +322,8 @@ kbd {
 }
 
 .results,
-.about-panel {
+.about-panel,
+.settings-panel {
   min-height: 0;
   overflow: auto;
   display: flex;
@@ -354,19 +389,64 @@ kbd {
   color: rgba(255, 126, 126, 0.9);
 }
 
+.expand-button,
+.icon-button,
 .close-button {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   border: 0;
   border-radius: 5px;
   background: transparent;
   color: rgba(246, 247, 249, 0.64);
+  font-size: 1.12rem;
+}
+
+.expand-button {
+  transform: rotate(0deg);
+  transition: transform 0.12s ease;
+}
+
+.expand-button.expanded {
+  transform: rotate(90deg);
+}
+
+.media-thumb {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(246, 247, 249, 0.72);
   font-size: 1rem;
 }
 
+.result-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.result-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.icon-button:disabled {
+  opacity: 0.35;
+}
+
+.expand-button:hover,
+.icon-button:not(:disabled):hover,
 .close-button:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.result-details {
+  display: grid;
+  gap: 7px;
 }
 
 .detections {
@@ -394,6 +474,79 @@ kbd {
 .error-text {
   margin: 0;
   font-size: 0.82rem;
+}
+
+.export-text {
+  margin: 0;
+  padding: 6px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(246, 247, 249, 0.56);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.export-text.missing {
+  color: rgba(255, 126, 126, 0.9);
+}
+
+.settings-panel {
+  gap: 8px;
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+}
+
+.setting-required {
+  border-color: rgba(255, 196, 86, 0.28);
+  background: rgba(255, 196, 86, 0.08);
+}
+
+.setting-title,
+.setting-value {
+  margin: 0;
+}
+
+.setting-title {
+  font-weight: 650;
+}
+
+.setting-value {
+  margin-top: 3px;
+  color: rgba(246, 247, 249, 0.52);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.secondary-button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 10px;
+}
+
+.select-control {
+  min-width: 92px;
+  min-height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  padding: 0 8px;
+  font: inherit;
+}
+
+.secondary-button:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .about-panel p {
@@ -463,16 +616,45 @@ kbd {
   .result-card,
   .about-panel p,
   .recent-preview,
-  .count {
+  .count,
+  .media-thumb,
+  .setting-row,
+  .export-text {
     border-color: rgba(0, 0, 0, 0.08);
     background: rgba(255, 255, 255, 0.52);
   }
 
   .menu-item:not(:disabled):hover,
   .recent-preview:hover,
+  .expand-button:hover,
+  .icon-button:not(:disabled):hover,
   .close-button:hover,
-  .back-button {
+  .back-button,
+  .secondary-button:hover {
     background: rgba(0, 0, 0, 0.06);
+  }
+
+  .secondary-button {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .select-control {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .warn-badge {
+    background: rgba(176, 117, 0, 0.16);
+    color: rgba(139, 84, 0, 0.96);
+  }
+
+  .setting-required {
+    border-color: rgba(176, 117, 0, 0.24);
+    background: rgba(255, 196, 86, 0.16);
+  }
+
+  .setting-value,
+  .export-text {
+    color: rgba(21, 24, 32, 0.52);
   }
 
   .dropzone-active {
@@ -483,6 +665,12 @@ kbd {
 
   .dropzone-busy {
     border-color: rgba(21, 24, 32, 0.2);
+  }
+
+  .dropzone-needs-folder {
+    border-color: rgba(219, 81, 81, 0.72);
+    background: rgba(219, 81, 81, 0.12);
+    color: rgba(139, 84, 0, 0.98);
   }
 
   .drop-progress {
