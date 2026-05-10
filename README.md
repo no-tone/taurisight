@@ -4,7 +4,21 @@
 
 # TauriSight
 
+<p>
+  <a href="#what-it-includes">Features</a>
+  ·
+  <a href="#project-structure">Project Structure</a>
+  ·
+  <a href="#prerequisites">Installation</a>
+  ·
+  <a href="#local-run-development">Development</a>
+  ·
+  <a href="#release">Release</a>
+</p>
+
 </div>
+
+---
 
 Tray-first Tauri desktop app for local image object detection with compact native-style React UI.
 
