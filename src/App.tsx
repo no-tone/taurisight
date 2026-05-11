@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useDropzone } from "react-dropzone";
@@ -70,9 +72,11 @@ function App() {
   const [view, setView] = useState<View>("menu");
   const [exportFolder, setExportFolder] = useState<string | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [videoExportType, setVideoExportType] = useState<VideoExportType>("webm");
+  const [videoExportType, setVideoExportType] =
+    useState<VideoExportType>("webm");
   const [language, setLanguage] = useState<Language>("en");
-  const [translations, setTranslations] = useState<Translations>(enTranslations);
+  const [translations, setTranslations] =
+    useState<Translations>(enTranslations);
   const [folderRequired, setFolderRequired] = useState(false);
   const [dropHint, setDropHint] = useState(enTranslations.dropzone.idle);
   const [activity, setActivity] = useState<Activity>({
@@ -82,18 +86,21 @@ function App() {
   });
   const modelRef = useRef<CocoModel | null>(null);
 
-  const setTrayProgress = useCallback((active: boolean, progress: number, label: string) => {
-    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const setTrayProgress = useCallback(
+    (active: boolean, progress: number, label: string) => {
+      const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    invoke("update_tray_progress", {
-      progress: {
-        active,
-        progress: Math.round(progress),
-        label,
-        dark,
-      },
-    }).catch(() => {});
-  }, []);
+      invoke("update_tray_progress", {
+        progress: {
+          active,
+          progress: Math.round(progress),
+          label,
+          dark,
+        },
+      }).catch(() => {});
+    },
+    [],
+  );
 
   const loadModel = useCallback(async () => {
     if (modelRef.current) {
@@ -118,21 +125,28 @@ function App() {
   const updateActivity = useCallback(
     (phase: Activity["phase"], fileName: string, progress: number) => {
       setActivity({ phase, fileName, progress });
-      setTrayProgress(phase !== "idle", progress, phase === "idle" ? "" : `${phase} ${fileName}`);
+      setTrayProgress(
+        phase !== "idle",
+        progress,
+        phase === "idle" ? "" : `${phase} ${fileName}`,
+      );
     },
     [setTrayProgress],
   );
 
   const t = translations;
 
-  const saveExport = useCallback(async (originalName: string, extension: string, blob: Blob) => {
-    const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
-    return invoke<SavedExport>("save_export_file", {
-      originalName,
-      extension,
-      bytes,
-    });
-  }, []);
+  const saveExport = useCallback(
+    async (originalName: string, extension: string, blob: Blob) => {
+      const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
+      return invoke<SavedExport>("save_export_file", {
+        originalName,
+        extension,
+        bytes,
+      });
+    },
+    [],
+  );
 
   const analyzeFiles = useCallback(
     async (files: File[]) => {
@@ -174,7 +188,9 @@ function App() {
         try {
           updateActivity("uploading", file.name, 10);
           setItems((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, status: "uploading" } : item)),
+            prev.map((item) =>
+              item.id === id ? { ...item, status: "uploading" } : item,
+            ),
           );
 
           objectUrl = URL.createObjectURL(file);
@@ -182,7 +198,9 @@ function App() {
 
           updateActivity("analyzing", file.name, 35);
           setItems((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, status: "analyzing" } : item)),
+            prev.map((item) =>
+              item.id === id ? { ...item, status: "analyzing" } : item,
+            ),
           );
 
           const model = await loadModel();
@@ -193,7 +211,8 @@ function App() {
                   objectUrl,
                   model,
                   saveExport,
-                  (progress) => updateActivity("analyzing", file.name, progress),
+                  (progress) =>
+                    updateActivity("analyzing", file.name, progress),
                   t,
                 )
               : await analyzeVideo(
@@ -201,7 +220,8 @@ function App() {
                   objectUrl,
                   model,
                   saveExport,
-                  (progress) => updateActivity("analyzing", file.name, progress),
+                  (progress) =>
+                    updateActivity("analyzing", file.name, progress),
                   videoExportType,
                   t,
                 );
@@ -222,7 +242,8 @@ function App() {
             ),
           );
         } catch (error) {
-          const message = error instanceof Error ? error.message : t.errors.mediaFailed;
+          const message =
+            error instanceof Error ? error.message : t.errors.mediaFailed;
           setItems((prev) =>
             prev.map((item) =>
               item.id === id
@@ -269,7 +290,9 @@ function App() {
 
         const blob = await item.getType(imageType);
         const extension = imageType.split("/")[1] ?? "png";
-        files.push(new File([blob], `clipboard-image.${extension}`, { type: imageType }));
+        files.push(
+          new File([blob], `clipboard-image.${extension}`, { type: imageType }),
+        );
       }
 
       await analyzeFiles(files);
@@ -338,11 +361,13 @@ function App() {
       return;
     }
 
-    const exists = await invoke<boolean>("export_file_exists", { path: item.exportPath }).catch(
-      () => false,
-    );
+    const exists = await invoke<boolean>("export_file_exists", {
+      path: item.exportPath,
+    }).catch(() => false);
     setItems((prev) =>
-      prev.map((entry) => (entry.id === item.id ? { ...entry, exportExists: exists } : entry)),
+      prev.map((entry) =>
+        entry.id === item.id ? { ...entry, exportExists: exists } : entry,
+      ),
     );
     if (exists) {
       invoke("reveal_exported_file", { path: item.exportPath }).catch(() => {});
@@ -352,8 +377,10 @@ function App() {
   const { getRootProps, getInputProps, isDragActive, isDragReject, open } =
     useDropzone({
       onDrop: analyzeFiles,
-      onDragEnter: () => setDropHint(exportFolder ? t.dropzone.release : t.dropzone.needsFolder),
-      onDragLeave: () => setDropHint(exportFolder ? t.dropzone.idle : t.dropzone.needsFolder),
+      onDragEnter: () =>
+        setDropHint(exportFolder ? t.dropzone.release : t.dropzone.needsFolder),
+      onDragLeave: () =>
+        setDropHint(exportFolder ? t.dropzone.idle : t.dropzone.needsFolder),
       accept: {
         "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif"],
         "video/mp4": [".mp4", ".m4v"],
@@ -373,7 +400,9 @@ function App() {
         if (!settings.export_folder) {
           if (settings.language === "pt") {
             import("./i18n/pt.json")
-              .then((module) => setDropHint(module.default.dropzone.needsFolder))
+              .then((module) =>
+                setDropHint(module.default.dropzone.needsFolder),
+              )
               .catch(() => setDropHint(enTranslations.dropzone.needsFolder));
           } else {
             setDropHint(enTranslations.dropzone.needsFolder);
@@ -430,7 +459,10 @@ function App() {
         .slice(0, MAX_CACHED_UPLOADS)
         .map(toCachedItem);
 
-      window.localStorage.setItem(RECENT_UPLOADS_CACHE_KEY, JSON.stringify(cacheable));
+      window.localStorage.setItem(
+        RECENT_UPLOADS_CACHE_KEY,
+        JSON.stringify(cacheable),
+      );
     } catch {
       // Ignore persistence failures in restricted environments.
     }
@@ -448,10 +480,22 @@ function App() {
     }
 
     setDropHint(translations.dropzone.idle);
-  }, [translations, activity.phase, folderRequired, settingsLoaded, exportFolder]);
+  }, [
+    translations,
+    activity.phase,
+    folderRequired,
+    settingsLoaded,
+    exportFolder,
+  ]);
 
   useEffect(() => {
-    const paths = items.filter((item) => item.exportPath).map((item) => item.exportPath as string);
+    checkForUpdates(true);
+  }, [checkForUpdates]);
+
+  useEffect(() => {
+    const paths = items
+      .filter((item) => item.exportPath)
+      .map((item) => item.exportPath as string);
     if (paths.length === 0) {
       return;
     }
@@ -462,9 +506,9 @@ function App() {
         .filter((item) => item.exportPath)
         .map(async (item) => ({
           id: item.id,
-          exists: await invoke<boolean>("export_file_exists", { path: item.exportPath }).catch(
-            () => false,
-          ),
+          exists: await invoke<boolean>("export_file_exists", {
+            path: item.exportPath,
+          }).catch(() => false),
         })),
     ).then((checks) => {
       if (cancelled) {
@@ -539,22 +583,27 @@ function App() {
 
   const latestItem = items[0];
   const needsExportFolder = settingsLoaded && !exportFolder;
-  const statusText = activity.phase === "idle"
-    ? folderRequired || needsExportFolder
-      ? t.dropzone.needsFolder
-      : isDragReject
-        ? t.dropzone.unsupported
-        : isDragActive
-          ? t.dropzone.drop
-          : dropHint
-    : `${activity.phase === "uploading" ? t.dropzone.uploading : t.dropzone.analyzing} ${
-        activity.fileName
-      }`;
+  const statusText =
+    activity.phase === "idle"
+      ? folderRequired || needsExportFolder
+        ? t.dropzone.needsFolder
+        : isDragReject
+          ? t.dropzone.unsupported
+          : isDragActive
+            ? t.dropzone.drop
+            : dropHint
+      : `${activity.phase === "uploading" ? t.dropzone.uploading : t.dropzone.analyzing} ${
+          activity.fileName
+        }`;
 
   return (
     <main className="app">
       {view !== "menu" && (
-        <button className="back-button" type="button" onClick={() => setView("menu")}>
+        <button
+          className="back-button"
+          type="button"
+          onClick={() => setView("menu")}
+        >
           ‹
         </button>
       )}
@@ -580,7 +629,11 @@ function App() {
           </div>
 
           <nav className="menu-list" aria-label="TauriSight actions">
-            <MenuButton label={t.menu.selectFile} shortcut={selectShortcut} onClick={open} />
+            <MenuButton
+              label={t.menu.selectFile}
+              shortcut={selectShortcut}
+              onClick={open}
+            />
             <MenuButton
               label={t.menu.clipboard}
               shortcut={clipboardShortcut}
@@ -595,12 +648,16 @@ function App() {
 
             <div className="separator" />
 
-            <RecentPreview item={latestItem} onOpen={() => setView("recent")} t={t} />
+            <RecentPreview
+              item={latestItem}
+              onOpen={() => setView("recent")}
+              t={t}
+            />
 
             <div className="separator" />
 
             <MenuButton label={t.menu.about} onClick={() => setView("about")} />
-            <MenuButton label={t.menu.updates} disabled />
+            <MenuButton label={t.menu.updates} onClick={checkForUpdates} />
 
             <div className="separator" />
 
@@ -630,7 +687,9 @@ function App() {
           </header>
 
           <div className="results">
-            {items.length === 0 && <div className="empty">{t.recents.empty}</div>}
+            {items.length === 0 && (
+              <div className="empty">{t.recents.empty}</div>
+            )}
             {items.map((item) => (
               <ResultCard
                 key={item.id}
@@ -658,9 +717,7 @@ function App() {
         />
       )}
 
-      {view === "about" && (
-        <AboutPanel t={t} />
-      )}
+      {view === "about" && <AboutPanel t={t} />}
     </main>
   );
 }
@@ -697,8 +754,7 @@ function AboutPanel({ t }: { t: Translations }) {
             onClick={() => openUrl(t.about.links.modelUrl)}
           >
             {t.about.links.modelLabel}
-          </button>
-          {" "}
+          </button>{" "}
           {t.about.modelBody}
         </p>
 
@@ -734,7 +790,12 @@ function MenuButton({
   onClick?: () => void;
 }) {
   return (
-    <button className="menu-item" type="button" disabled={disabled} onClick={onClick}>
+    <button
+      className="menu-item"
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+    >
       <span className="menu-label">
         {warning && <span className="warn-badge">!</span>}
         {label}
@@ -756,7 +817,9 @@ function RecentPreview({
   return (
     <button className="recent-preview" type="button" onClick={onOpen}>
       <span className="preview-label">{t.recents.latest}</span>
-      <span className="preview-name">{item ? item.name : t.recents.noUploads}</span>
+      <span className="preview-name">
+        {item ? item.name : t.recents.noUploads}
+      </span>
       <span className={`preview-dot ${item ? `dot-${item.status}` : ""}`} />
     </button>
   );
@@ -776,7 +839,10 @@ function SettingsPanel({
   videoExportType: VideoExportType;
   language: Language;
   onChooseFolder: () => void;
-  onPreferenceChange: (videoExportType: VideoExportType, language: Language) => void;
+  onPreferenceChange: (
+    videoExportType: VideoExportType,
+    language: Language,
+  ) => void;
   t: Translations;
 }) {
   return (
@@ -790,12 +856,20 @@ function SettingsPanel({
       </header>
 
       <div className="settings-panel">
-        <div className={`setting-row ${needsExportFolder ? "setting-required" : ""}`}>
+        <div
+          className={`setting-row ${needsExportFolder ? "setting-required" : ""}`}
+        >
           <div>
             <p className="setting-title">{t.settings.exportFolder}</p>
-            <p className="setting-value">{exportFolder ?? t.settings.required}</p>
+            <p className="setting-value">
+              {exportFolder ?? t.settings.required}
+            </p>
           </div>
-          <button className="secondary-button" type="button" onClick={onChooseFolder}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={onChooseFolder}
+          >
             {t.settings.choose}
           </button>
         </div>
@@ -808,7 +882,10 @@ function SettingsPanel({
             className="select-control"
             value={videoExportType}
             onChange={(event) =>
-              onPreferenceChange(event.currentTarget.value as VideoExportType, language)
+              onPreferenceChange(
+                event.currentTarget.value as VideoExportType,
+                language,
+              )
             }
           >
             <option value="webm">WebM</option>
@@ -819,13 +896,18 @@ function SettingsPanel({
         <label className="setting-row">
           <div>
             <p className="setting-title">{t.settings.language}</p>
-            <p className="setting-value">{language === "pt" ? t.settings.portuguese : t.settings.english}</p>
+            <p className="setting-value">
+              {language === "pt" ? t.settings.portuguese : t.settings.english}
+            </p>
           </div>
           <select
             className="select-control"
             value={language}
             onChange={(event) =>
-              onPreferenceChange(videoExportType, event.currentTarget.value as Language)
+              onPreferenceChange(
+                videoExportType,
+                event.currentTarget.value as Language,
+              )
             }
           >
             <option value="en">{t.settings.english}</option>
@@ -904,9 +986,13 @@ function ResultCard({
 
       {expanded && (
         <div className="result-details">
-          {item.status === "error" && <p className="error-text">{item.error}</p>}
+          {item.status === "error" && (
+            <p className="error-text">{item.error}</p>
+          )}
           {item.exportName && (
-            <p className={`export-text ${item.exportExists === false ? "missing" : ""}`}>
+            <p
+              className={`export-text ${item.exportExists === false ? "missing" : ""}`}
+            >
               {item.exportExists === false
                 ? t.recents.missingExport
                 : `${t.recents.exported}: ${item.exportName}`}
@@ -936,7 +1022,11 @@ async function analyzeImage(
   file: File,
   objectUrl: string,
   model: CocoModel,
-  saveExport: (originalName: string, extension: string, blob: Blob) => Promise<SavedExport>,
+  saveExport: (
+    originalName: string,
+    extension: string,
+    blob: Blob,
+  ) => Promise<SavedExport>,
   setProgress: (progress: number) => void,
   t: Translations,
 ) {
@@ -968,7 +1058,11 @@ async function analyzeVideo(
   file: File,
   objectUrl: string,
   model: CocoModel,
-  saveExport: (originalName: string, extension: string, blob: Blob) => Promise<SavedExport>,
+  saveExport: (
+    originalName: string,
+    extension: string,
+    blob: Blob,
+  ) => Promise<SavedExport>,
   setProgress: (progress: number) => void,
   exportType: VideoExportType,
   t: Translations,
@@ -978,10 +1072,16 @@ async function analyzeVideo(
     throw new Error(t.errors.videoDuration);
   }
   if (video.duration > MAX_VIDEO_SECONDS) {
-    throw new Error(t.errors.videoTooLong.replace("{seconds}", String(MAX_VIDEO_SECONDS)));
+    throw new Error(
+      t.errors.videoTooLong.replace("{seconds}", String(MAX_VIDEO_SECONDS)),
+    );
   }
 
-  const { width, height } = fitSize(video.videoWidth, video.videoHeight, MAX_EXPORT_SIDE);
+  const { width, height } = fitSize(
+    video.videoWidth,
+    video.videoHeight,
+    MAX_EXPORT_SIDE,
+  );
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -993,9 +1093,16 @@ async function analyzeVideo(
   const stream = canvas.captureStream(24);
   const mimeType = preferredVideoMimeType(exportType);
   if (!mimeType) {
-    throw new Error(t.errors.videoFormatUnavailable.replace("{format}", exportType.toUpperCase()));
+    throw new Error(
+      t.errors.videoFormatUnavailable.replace(
+        "{format}",
+        exportType.toUpperCase(),
+      ),
+    );
   }
-  const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+  const recorder = mimeType
+    ? new MediaRecorder(stream, { mimeType })
+    : new MediaRecorder(stream);
   const chunks: BlobPart[] = [];
   const allPredictions: Prediction[] = [];
   let predictions: Prediction[] = [];
@@ -1009,7 +1116,8 @@ async function analyzeVideo(
   };
 
   const stopped = new Promise<Blob>((resolve) => {
-    recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || "video/webm" }));
+    recorder.onstop = () =>
+      resolve(new Blob(chunks, { type: recorder.mimeType || "video/webm" }));
   });
 
   recorder.start(500);
@@ -1020,7 +1128,12 @@ async function analyzeVideo(
   await new Promise<void>((resolve) => {
     const draw = () => {
       context.drawImage(video, 0, 0, width, height);
-      drawDetections(context, predictions, width / video.videoWidth, height / video.videoHeight);
+      drawDetections(
+        context,
+        predictions,
+        width / video.videoWidth,
+        height / video.videoHeight,
+      );
       setProgress(45 + Math.min(45, (video.currentTime / video.duration) * 45));
 
       const now = performance.now();
@@ -1070,7 +1183,8 @@ function drawDetections(
 ) {
   context.save();
   context.lineWidth = 3;
-  context.font = "600 14px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  context.font =
+    "600 14px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
 
   for (const prediction of predictions) {
     const [x, y, width, height] = prediction.bbox;
@@ -1102,7 +1216,9 @@ function dedupePredictions(predictions: Prediction[]) {
     }
   }
 
-  return Array.from(best.values()).sort((left, right) => right.score - left.score);
+  return Array.from(best.values()).sort(
+    (left, right) => right.score - left.score,
+  );
 }
 
 function isSupportedFile(file: File) {
@@ -1140,7 +1256,11 @@ function mustContext(canvas: HTMLCanvasElement, t: Translations) {
   return context;
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, t: Translations) {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  t: Translations,
+) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) {
@@ -1177,6 +1297,52 @@ function loadVideo(src: string, t: Translations) {
     video.load();
   });
 }
+
+const checkForUpdates = useCallback(async (silent = false) => {
+  try {
+    const update = await check();
+
+    if (!update) {
+      if (!silent) {
+        alert("No updates available.");
+      }
+
+      return;
+    }
+
+    const confirmed = confirm(
+      `Version ${update.version} is available. Install now?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await update.downloadAndInstall((event) => {
+      switch (event.event) {
+        case "Started":
+          console.log("Download started");
+          break;
+
+        case "Progress":
+          console.log("Downloading...");
+          break;
+
+        case "Finished":
+          console.log("Finished");
+          break;
+      }
+    });
+
+    await relaunch();
+  } catch (err) {
+    console.error(err);
+
+    if (!silent) {
+      alert("Failed to update.");
+    }
+  }
+}, []);
 
 function toCachedItem(item: ProcessedItem) {
   return {
@@ -1221,7 +1387,9 @@ function restoreCachedItem(input: unknown): ProcessedItem | null {
     : [];
 
   const status: ItemStatus =
-    candidate.status === "done" || candidate.status === "error" ? candidate.status : "error";
+    candidate.status === "done" || candidate.status === "error"
+      ? candidate.status
+      : "error";
 
   return {
     id: candidate.id,
@@ -1230,12 +1398,27 @@ function restoreCachedItem(input: unknown): ProcessedItem | null {
     kind: candidate.kind === "video" ? "video" : "image",
     status,
     predictions,
-    dimensions: typeof candidate.dimensions === "string" ? candidate.dimensions : undefined,
-    exportPath: typeof candidate.exportPath === "string" ? candidate.exportPath : undefined,
-    exportName: typeof candidate.exportName === "string" ? candidate.exportName : undefined,
-    exportExists: typeof candidate.exportExists === "boolean" ? candidate.exportExists : undefined,
+    dimensions:
+      typeof candidate.dimensions === "string"
+        ? candidate.dimensions
+        : undefined,
+    exportPath:
+      typeof candidate.exportPath === "string"
+        ? candidate.exportPath
+        : undefined,
+    exportName:
+      typeof candidate.exportName === "string"
+        ? candidate.exportName
+        : undefined,
+    exportExists:
+      typeof candidate.exportExists === "boolean"
+        ? candidate.exportExists
+        : undefined,
     error: typeof candidate.error === "string" ? candidate.error : undefined,
-    createdAt: typeof candidate.createdAt === "number" ? candidate.createdAt : Date.now(),
+    createdAt:
+      typeof candidate.createdAt === "number"
+        ? candidate.createdAt
+        : Date.now(),
   };
 }
 

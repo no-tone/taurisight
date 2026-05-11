@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag, for example v0.3.1
+        description: Release tag, for example v0.3.2
         required: true
-        default: v0.3.1
+        default: v0.3.2
 
 permissions:
   contents: write
@@ -55,7 +55,7 @@ jobs:
             libxdo-dev \
             libssl-dev
 
-      - name: Setup pnpm  
+      - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           version: 11
@@ -99,3 +99,4 @@ jobs:
           releaseBody: See the assets below to download and install TauriSight.
           releaseDraft: false
           prerelease: false
+          includeUpdaterJson: true
