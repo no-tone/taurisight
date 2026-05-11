@@ -32,8 +32,6 @@ Tray-first Tauri desktop app for local image object detection with compact nativ
 
 Uses [TensorFlow.js Coco SSD](https://www.npmjs.com/package/@tensorflow-models/coco-ssd) to detect common COCO objects in uploaded images.
 
-Made by [no-tone](https://no-tone.com).
-
 ## Preview
 
 <p align="center">
