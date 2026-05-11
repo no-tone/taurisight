@@ -28,22 +28,44 @@ Made by [no-tone](https://no-tone.com).
 
 ## What It Includes
 
+### Desktop App Experience
+
 - Tray-only desktop behavior with the main window hidden until the tray icon is clicked.
 - Compact dark/light native-style interface for macOS and Windows.
+- Latest upload preview in the main tray panel.
+- Tauri tray menu with select file, clipboard upload, recent uploads, about, settings, and quit.
+- Dynamic tray progress icon using the app icon plus a theme-aware progress bar.
+
+### Media Input & Processing
+
 - Drag-and-drop media dropzone with file picker, clipboard image import, image support, and short MP4/MOV video support.
 - Uploading and analyzing states with inline progress in the dropzone.
 - TensorFlow.js Coco SSD object detection for 80 common object classes.
 - Local image analysis inside the app webview; no custom upload server.
 - Annotated image/video export to a user-selected local folder.
+
+### Export & File Management
+
 - Required first-run export folder setting with guarded writes from Rust.
 - Recent uploads page with expandable entries, status, confidence scores, dimensions, exported filename, reveal-in-Finder/File Explorer, and removable entries.
 - Export existence check, so moved/deleted exports are shown as missing instead of silently failing.
-- Settings for preferred video export format and UI language (`en`/`pt`).
-- Latest upload preview in the main tray panel.
-- Tauri tray menu with select file, clipboard upload, recent uploads, about, settings placeholder, and quit.
-- Dynamic tray progress icon using the app icon plus a theme-aware progress bar.
+
+### Settings & Localization
+
+- Settings for preferred video export format and UI language (`en` / `pt`).
 - Localized about panel driven by frontend i18n (`src/i18n/*.json`).
+
+### Updates & Releases
+
 - GitHub Actions release workflow for macOS, Windows, and Linux builds.
+- Automatic in-app updates via Tauri Updater + GitHub Releases.
+- Signed release artifacts with generated `latest.json` metadata.
+- Silent update checks on app startup.
+
+### Technical Notes
+
+- Built with Tauri + React + TensorFlow.js.
+- Native-style lightweight desktop architecture with local-first processing.
 
 ## Project Structure
 
