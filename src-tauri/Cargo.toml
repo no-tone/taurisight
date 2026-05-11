@@ -1,6 +1,6 @@
 [package]
 name = "taurisight"
-version = "0.3.2"
+version = "0.3.3"
 description = "Tray-first image object detection app"
 authors = ["no-tone"]
 edition = "2021"
