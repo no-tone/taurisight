@@ -1,6 +1,6 @@
 [package]
 name = "taurisight"
-version = "0.3.7"
+version = "0.3.8"
 description = "Tray-first image object detection app"
 authors = ["no-tone"]
 edition = "2021"
@@ -20,6 +20,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
 tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
 anyhow = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 rfd = "0.15"

@@ -12,6 +12,7 @@ import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useDropzone } from "react-dropzone";
 import enTranslations from "./i18n/en.json";
+import packageJson from "../package.json";
 import "./App.css";
 
 type Prediction = import("@tensorflow-models/coco-ssd").DetectedObject;
@@ -71,7 +72,6 @@ const VIDEO_DETECT_INTERVAL_MS = 500;
 const MAX_EXPORT_SIDE = 960;
 const RECENT_UPLOADS_CACHE_KEY = "taurisight:recent-uploads:v1";
 const MAX_CACHED_UPLOADS = 120;
-const APP_VERSION = "0.3.7";
 
 const isMac = navigator.platform.toLowerCase().includes("mac");
 const selectShortcut = isMac ? "⌘O" : "Ctrl+O";
@@ -905,7 +905,7 @@ function Footer({ t }: { t: Translations }) {
         type="button"
         onClick={() => openUrl(t.footer.versionUrl)}
       >
-        {t.footer.version.replace("{version}", APP_VERSION)}
+        {t.footer.version.replace("{version}", packageJson.version)}
       </button>
       <div className="footer-copyright">
         <span>{t.footer.copyright.split("no-tone")[0]}</span>

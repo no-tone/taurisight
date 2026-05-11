@@ -1,10 +1,12 @@
 <div align="center">
 
-<img src="public/icon.png" alt="TauriSight" width="128"/>
+<img src="public/icon.png" alt="TauriSight Icon" width="100"/>
 
 # TauriSight
 
 <p>
+  <a href="#preview">Preview</a>
+  ·
   <a href="#what-it-includes">Features</a>
   ·
   <a href="#project-structure">Project Structure</a>
@@ -25,6 +27,14 @@ Tray-first Tauri desktop app for local image object detection with compact nativ
 Uses [TensorFlow.js Coco SSD](https://www.npmjs.com/package/@tensorflow-models/coco-ssd) to detect common COCO objects in uploaded images.
 
 Made by [no-tone](https://no-tone.com).
+
+## Preview
+
+<p align="center">
+
+  <img src="public/app.png" alt="TauriSight App" width="350"/>
+
+</p>
 
 ## What It Includes
 
@@ -133,8 +143,8 @@ Use `pnpm tauri build` when you want a production binary without running the dev
 Automatic GitHub releases run when a version tag is pushed.
 
 ```bash
-git tag v0.3.7
-git push origin v0.3.7
+git tag v0.3.8
+git push origin v0.3.8
 ```
 
 The workflow can also be started manually from GitHub Actions with `workflow_dispatch`.
