@@ -670,6 +670,7 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: 8px 0;
   align-items: center;
   font-size: 0.75rem;
   color: rgba(246, 247, 249, 0.38);
