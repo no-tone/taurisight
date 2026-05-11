@@ -36,7 +36,8 @@ Uses [TensorFlow.js Coco SSD](https://www.npmjs.com/package/@tensorflow-models/c
 
 <p align="center">
 
-  <img src="public/app.png" alt="TauriSight App" width="350"/>
+  <img src="public/app1.png" alt="TauriSight Screenshot 1" width="350"/>
+  <img src="public/app2.png" alt="TauriSight Screenshot 2" width="350"/>
 
 </p>
 
