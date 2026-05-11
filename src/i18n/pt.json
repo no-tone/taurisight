@@ -17,6 +17,15 @@
     "settings": "Definições",
     "quit": "Sair"
   },
+  "updates": {
+    "available": "Versão {version} disponível",
+    "installing": "A instalar versão {version}...",
+    "failed": "Falha ao atualizar",
+    "unavailable": "Atualização não disponível",
+    "install": "Instalar atualização",
+    "dismiss": "Fechar aviso",
+    "noneFound": "Nenhuma atualização nova encontrada"
+  },
   "recents": {
     "title": "Uploads recentes",
     "empty": "Ainda sem ficheiros processados.",

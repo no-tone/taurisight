@@ -17,6 +17,15 @@
     "settings": "Settings",
     "quit": "Quit"
   },
+  "updates": {
+    "available": "Version {version} is available",
+    "installing": "Installing version {version}...",
+    "failed": "Failed to update",
+    "unavailable": "Update no longer available",
+    "install": "Install update",
+    "dismiss": "Dismiss update",
+    "noneFound": "No new updates found"
+  },
   "recents": {
     "title": "Recent uploads",
     "empty": "No processed files yet.",

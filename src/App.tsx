@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
@@ -15,6 +21,10 @@ type MediaKind = "image" | "video";
 type View = "menu" | "recent" | "about" | "settings";
 type Language = "en" | "pt";
 type VideoExportType = "webm" | "mp4" | "mov";
+type UpdateBanner =
+  | { status: "available"; version: string }
+  | { status: "installing"; version: string }
+  | { status: "error"; message: string };
 
 type ProcessedItem = {
   id: string;
@@ -79,67 +89,98 @@ function App() {
     useState<Translations>(enTranslations);
   const [folderRequired, setFolderRequired] = useState(false);
   const [dropHint, setDropHint] = useState(enTranslations.dropzone.idle);
+  const [updateBanner, setUpdateBanner] = useState<UpdateBanner | null>(null);
+  const [updateButtonLabel, setUpdateButtonLabel] = useState<string | null>(
+    null,
+  );
   const [activity, setActivity] = useState<Activity>({
     phase: "idle",
     fileName: "",
     progress: 0,
   });
   const modelRef = useRef<CocoModel | null>(null);
+  const updateButtonTimerRef = useRef<number | null>(null);
+  const t = translations;
 
-  const checkForUpdates = useCallback(async (silent = false) => {
+  const checkForUpdates = useCallback(
+    async (silent = false) => {
+      try {
+        const update = await check();
+
+        if (!update) {
+          if (!silent) {
+            if (updateButtonTimerRef.current !== null) {
+              window.clearTimeout(updateButtonTimerRef.current);
+            }
+
+            setUpdateBanner(null);
+            setUpdateButtonLabel(t.updates.noneFound);
+            updateButtonTimerRef.current = window.setTimeout(() => {
+              setUpdateButtonLabel(null);
+              updateButtonTimerRef.current = null;
+            }, 3000);
+          }
+
+          return;
+        }
+
+        if (updateButtonTimerRef.current !== null) {
+          window.clearTimeout(updateButtonTimerRef.current);
+          updateButtonTimerRef.current = null;
+        }
+
+        setUpdateButtonLabel(null);
+        setUpdateBanner({ status: "available", version: update.version });
+      } catch (err) {
+        console.error("Updater error:", err);
+        if (updateButtonTimerRef.current !== null) {
+          window.clearTimeout(updateButtonTimerRef.current);
+          updateButtonTimerRef.current = null;
+        }
+
+        setUpdateButtonLabel(null);
+        if (!silent) {
+          setUpdateBanner({ status: "error", message: t.updates.failed });
+        }
+      }
+    },
+    [t.updates.failed],
+  );
+
+  const installUpdate = useCallback(async () => {
+    if (!updateBanner || updateBanner.status !== "available") {
+      return;
+    }
+
     try {
       const update = await check();
-
-      if (!update) {
-        if (!silent) {
-          alert("No updates available.");
-        }
-
+      if (!update || update.version !== updateBanner.version) {
+        setUpdateBanner({ status: "error", message: t.updates.unavailable });
         return;
       }
 
-      const confirmed = confirm(
-        `Version ${update.version} is available. Install now?`,
-      );
-
-      if (!confirmed) {
-        return;
+      if (updateButtonTimerRef.current !== null) {
+        window.clearTimeout(updateButtonTimerRef.current);
+        updateButtonTimerRef.current = null;
       }
 
-      await update.downloadAndInstall((event) => {
-        switch (event.event) {
-          case "Started":
-            console.log("Download started");
-            break;
+      setUpdateButtonLabel(null);
+      setUpdateBanner({ status: "installing", version: updateBanner.version });
 
-          case "Progress":
-            console.log("Downloading...");
-            break;
-
-          case "Finished":
-            console.log("Finished");
-            break;
-        }
-      });
-
+      await update.downloadAndInstall(() => {});
       await relaunch();
     } catch (err) {
       console.error("Updater error:", err);
-
-      const message = err instanceof Error ? err.message : String(err);
-
-      // Ignore missing latest.json / missing release metadata
-      if (
-        message.includes("Could not fetch a valid release JSON") ||
-        message.includes("404")
-      ) {
-        return;
-      }
-
-      if (!silent) {
-        alert("Failed to update.");
-      }
+      setUpdateBanner({ status: "error", message: t.updates.failed });
     }
+  }, [check, t.updates.failed, t.updates.unavailable, updateBanner]);
+
+  useEffect(() => {
+    return () => {
+      if (updateButtonTimerRef.current !== null) {
+        window.clearTimeout(updateButtonTimerRef.current);
+      }
+    };
   }, []);
 
   const setTrayProgress = useCallback(
@@ -157,6 +198,16 @@ function App() {
     },
     [],
   );
+
+  useEffect(() => {
+    setTrayProgress(false, 0, "");
+
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleThemeChange = () => setTrayProgress(false, 0, "");
+
+    colorScheme.addEventListener("change", handleThemeChange);
+    return () => colorScheme.removeEventListener("change", handleThemeChange);
+  }, [setTrayProgress]);
 
   const loadModel = useCallback(async () => {
     if (modelRef.current) {
@@ -189,8 +240,6 @@ function App() {
     },
     [setTrayProgress],
   );
-
-  const t = translations;
 
   const saveExport = useCallback(
     async (originalName: string, extension: string, blob: Blob) => {
@@ -713,8 +762,65 @@ function App() {
             <div className="separator" />
 
             <MenuButton label={t.menu.about} onClick={() => setView("about")} />
-            <MenuButton label={t.menu.updates} onClick={checkForUpdates} />
+            <MenuButton
+              label={
+                updateButtonLabel ??
+                (updateBanner
+                  ? updateBanner.status === "available"
+                    ? t.updates.available.replace(
+                        "{version}",
+                        updateBanner.version,
+                      )
+                    : updateBanner.status === "installing"
+                      ? t.updates.installing.replace(
+                          "{version}",
+                          updateBanner.version,
+                        )
+                      : updateBanner.message
+                  : t.menu.updates)
+              }
+              onClick={() => {
+                if (updateBanner?.status === "available") {
+                  void installUpdate();
+                  return;
+                }
 
+                if (!updateBanner || updateBanner.status === "error") {
+                  void checkForUpdates(false);
+                }
+              }}
+              disabled={updateBanner?.status === "installing"}
+              trailing={
+                updateBanner ? (
+                  <span className="update-actions">
+                    {updateBanner.status === "available" && (
+                      <button
+                        className="update-action"
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void installUpdate();
+                        }}
+                        aria-label={t.updates.install}
+                      >
+                        ✓
+                      </button>
+                    )}
+                    <button
+                      className="update-action"
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setUpdateBanner(null);
+                      }}
+                      aria-label={t.updates.dismiss}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ) : null
+              }
+            />
             <div className="separator" />
 
             <MenuButton
@@ -837,27 +943,32 @@ function MenuButton({
   shortcut,
   disabled,
   warning,
+  trailing,
   onClick,
 }: {
   label: string;
   shortcut?: string;
   disabled?: boolean;
   warning?: boolean;
+  trailing?: ReactNode;
   onClick?: () => void;
 }) {
   return (
-    <button
-      className="menu-item"
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <span className="menu-label">
-        {warning && <span className="warn-badge">!</span>}
-        {label}
-      </span>
-      {shortcut && <kbd>{shortcut}</kbd>}
-    </button>
+    <div className="menu-row">
+      <button
+        className="menu-item"
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+      >
+        <span className="menu-label">
+          {warning && <span className="warn-badge">!</span>}
+          {label}
+        </span>
+        {!trailing && shortcut && <kbd>{shortcut}</kbd>}
+      </button>
+      {trailing && <div className="menu-trailing">{trailing}</div>}
+    </div>
   );
 }
 

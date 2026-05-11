@@ -583,7 +583,7 @@ pub fn run() {
                         .cloned()
                         .ok_or_else(|| anyhow!("missing default app icon"))?,
                 )
-                .icon_as_template(true)
+                .icon_as_template(cfg!(target_os = "macos"))
                 .tooltip("TauriSight")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
