@@ -133,8 +133,8 @@ Use `pnpm tauri build` when you want a production binary without running the dev
 Automatic GitHub releases run when a version tag is pushed.
 
 ```bash
-git tag v0.3.3
-git push origin v0.3.3
+git tag v0.3.4
+git push origin v0.3.4
 ```
 
 The workflow can also be started manually from GitHub Actions with `workflow_dispatch`.
