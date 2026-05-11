@@ -86,6 +86,62 @@ function App() {
   });
   const modelRef = useRef<CocoModel | null>(null);
 
+  const checkForUpdates = useCallback(async (silent = false) => {
+    try {
+      const update = await check();
+
+      if (!update) {
+        if (!silent) {
+          alert("No updates available.");
+        }
+
+        return;
+      }
+
+      const confirmed = confirm(
+        `Version ${update.version} is available. Install now?`,
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await update.downloadAndInstall((event) => {
+        switch (event.event) {
+          case "Started":
+            console.log("Download started");
+            break;
+
+          case "Progress":
+            console.log("Downloading...");
+            break;
+
+          case "Finished":
+            console.log("Finished");
+            break;
+        }
+      });
+
+      await relaunch();
+    } catch (err) {
+      console.error("Updater error:", err);
+
+      const message = err instanceof Error ? err.message : String(err);
+
+      // Ignore missing latest.json / missing release metadata
+      if (
+        message.includes("Could not fetch a valid release JSON") ||
+        message.includes("404")
+      ) {
+        return;
+      }
+
+      if (!silent) {
+        alert("Failed to update.");
+      }
+    }
+  }, []);
+
   const setTrayProgress = useCallback(
     (active: boolean, progress: number, label: string) => {
       const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -1297,52 +1353,6 @@ function loadVideo(src: string, t: Translations) {
     video.load();
   });
 }
-
-const checkForUpdates = useCallback(async (silent = false) => {
-  try {
-    const update = await check();
-
-    if (!update) {
-      if (!silent) {
-        alert("No updates available.");
-      }
-
-      return;
-    }
-
-    const confirmed = confirm(
-      `Version ${update.version} is available. Install now?`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    await update.downloadAndInstall((event) => {
-      switch (event.event) {
-        case "Started":
-          console.log("Download started");
-          break;
-
-        case "Progress":
-          console.log("Downloading...");
-          break;
-
-        case "Finished":
-          console.log("Finished");
-          break;
-      }
-    });
-
-    await relaunch();
-  } catch (err) {
-    console.error(err);
-
-    if (!silent) {
-      alert("Failed to update.");
-    }
-  }
-}, []);
 
 function toCachedItem(item: ProcessedItem) {
   return {
