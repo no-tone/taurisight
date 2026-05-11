@@ -163,7 +163,7 @@ kbd {
 }
 
 .menu-item {
-  width: 100%;
+  width: auto;
   min-height: 30px;
   border: 0;
   border-radius: 5px;
@@ -655,7 +655,7 @@ kbd {
 
 .about-list {
   margin: 0;
-  padding: 0 0 0 16px;
+  padding: 0 0 0 20px;
   color: rgba(246, 247, 249, 0.74);
   display: grid;
   gap: 6px;
@@ -664,6 +664,35 @@ kbd {
 .md-bullet {
   padding-top: 6px;
   padding-bottom: 6px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  font-size: 0.75rem;
+  color: rgba(246, 247, 249, 0.38);
+  line-height: 1.6;
+}
+
+.footer-copyright {
+  display: flex;
+  gap: 4px;
+}
+
+.footer-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(246, 247, 249, 0.38);
+  font-size: 0.75rem;
+  text-decoration: none;
+  cursor: default;
+}
+
+.footer-link:hover {
+  color: rgba(246, 247, 249, 0.6);
 }
 
 @media (prefers-color-scheme: light) {

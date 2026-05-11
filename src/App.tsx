@@ -21,6 +21,7 @@ type MediaKind = "image" | "video";
 type View = "menu" | "recent" | "about" | "settings";
 type Language = "en" | "pt";
 type VideoExportType = "webm" | "mp4" | "mov";
+type ImageExportType = "png";
 type UpdateBanner =
   | { status: "available"; version: string }
   | { status: "installing"; version: string }
@@ -55,6 +56,7 @@ type SavedExport = {
 type ClientSettings = {
   export_folder: string | null;
   preferred_video_export: VideoExportType;
+  preferred_image_export: ImageExportType;
   language: Language;
 };
 
@@ -69,6 +71,7 @@ const VIDEO_DETECT_INTERVAL_MS = 500;
 const MAX_EXPORT_SIDE = 960;
 const RECENT_UPLOADS_CACHE_KEY = "taurisight:recent-uploads:v1";
 const MAX_CACHED_UPLOADS = 120;
+const APP_VERSION = "0.3.7";
 
 const isMac = navigator.platform.toLowerCase().includes("mac");
 const selectShortcut = isMac ? "⌘O" : "Ctrl+O";
@@ -84,6 +87,8 @@ function App() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [videoExportType, setVideoExportType] =
     useState<VideoExportType>("webm");
+  const [imageExportType, setImageExportType] =
+    useState<ImageExportType>("png");
   const [language, setLanguage] = useState<Language>("en");
   const [translations, setTranslations] =
     useState<Translations>(enTranslations);
@@ -429,12 +434,18 @@ function App() {
   }, [t.dropzone.idle]);
 
   const updatePreference = useCallback(
-    async (nextVideoExport: VideoExportType, nextLanguage: Language) => {
+    async (
+      nextVideoExport: VideoExportType,
+      nextImageExport: ImageExportType,
+      nextLanguage: Language,
+    ) => {
       const settings = await invoke<ClientSettings>("update_preferences", {
         preferredVideoExport: nextVideoExport,
+        preferredImageExport: nextImageExport,
         language: nextLanguage,
       });
       setVideoExportType(settings.preferred_video_export);
+      setImageExportType(settings.preferred_image_export);
       setLanguage(settings.language);
     },
     [],
@@ -501,6 +512,7 @@ function App() {
       .then((settings) => {
         setExportFolder(settings.export_folder);
         setVideoExportType(settings.preferred_video_export);
+        setImageExportType(settings.preferred_image_export);
         setLanguage(settings.language);
         if (!settings.export_folder) {
           if (settings.language === "pt") {
@@ -872,6 +884,7 @@ function App() {
           exportFolder={exportFolder}
           needsExportFolder={needsExportFolder}
           videoExportType={videoExportType}
+          imageExportType={imageExportType}
           language={language}
           onChooseFolder={chooseExportFolder}
           onPreferenceChange={updatePreference}
@@ -881,6 +894,31 @@ function App() {
 
       {view === "about" && <AboutPanel t={t} />}
     </main>
+  );
+}
+
+function Footer({ t }: { t: Translations }) {
+  return (
+    <div className="footer">
+      <button
+        className="footer-link"
+        type="button"
+        onClick={() => openUrl(t.footer.versionUrl)}
+      >
+        {t.footer.version.replace("{version}", APP_VERSION)}
+      </button>
+      <div className="footer-copyright">
+        <span>{t.footer.copyright.split("no-tone")[0]}</span>
+        <button
+          className="footer-link"
+          type="button"
+          onClick={() => openUrl(t.footer.siteUrl)}
+        >
+          no-tone
+        </button>
+        <span>{t.footer.copyright.split("no-tone")[1]}</span>
+      </div>
+    </div>
   );
 }
 
@@ -896,17 +934,6 @@ function AboutPanel({ t }: { t: Translations }) {
 
       <div className="about-panel">
         <p>{t.about.summary}</p>
-        <p>
-          {t.about.madeByPrefix}{" "}
-          <button
-            className="text-link"
-            type="button"
-            onClick={() => openUrl(t.about.links.siteUrl)}
-          >
-            {t.about.links.siteLabel}
-          </button>
-          .
-        </p>
 
         <h2>{t.about.modelTitle}</h2>
         <p>
@@ -933,6 +960,8 @@ function AboutPanel({ t }: { t: Translations }) {
             <li key={`notes-${index}`}>{item}</li>
           ))}
         </ul>
+
+        <Footer t={t} />
       </div>
     </section>
   );
@@ -996,6 +1025,7 @@ function SettingsPanel({
   exportFolder,
   needsExportFolder,
   videoExportType,
+  imageExportType,
   language,
   onChooseFolder,
   onPreferenceChange,
@@ -1004,10 +1034,12 @@ function SettingsPanel({
   exportFolder: string | null;
   needsExportFolder: boolean;
   videoExportType: VideoExportType;
+  imageExportType: ImageExportType;
   language: Language;
   onChooseFolder: () => void;
   onPreferenceChange: (
     videoExportType: VideoExportType,
+    imageExportType: ImageExportType,
     language: Language,
   ) => void;
   t: Translations;
@@ -1051,6 +1083,7 @@ function SettingsPanel({
             onChange={(event) =>
               onPreferenceChange(
                 event.currentTarget.value as VideoExportType,
+                imageExportType,
                 language,
               )
             }
@@ -1058,6 +1091,25 @@ function SettingsPanel({
             <option value="webm">WebM</option>
             <option value="mp4">MP4</option>
             <option value="mov">MOV</option>
+          </select>
+        </label>
+        <label className="setting-row">
+          <div>
+            <p className="setting-title">{t.settings.imageExport}</p>
+            <p className="setting-value">{t.settings.imageNote}</p>
+          </div>
+          <select
+            className="select-control"
+            value={imageExportType}
+            onChange={(event) =>
+              onPreferenceChange(
+                videoExportType,
+                event.currentTarget.value as ImageExportType,
+                language,
+              )
+            }
+          >
+            <option value="png">PNG</option>
           </select>
         </label>
         <label className="setting-row">
@@ -1073,6 +1125,7 @@ function SettingsPanel({
             onChange={(event) =>
               onPreferenceChange(
                 videoExportType,
+                imageExportType,
                 event.currentTarget.value as Language,
               )
             }
@@ -1081,6 +1134,8 @@ function SettingsPanel({
             <option value="pt">{t.settings.portuguese}</option>
           </select>
         </label>
+
+        <Footer t={t} />
       </div>
     </section>
   );

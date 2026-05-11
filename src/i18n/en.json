@@ -46,6 +46,8 @@
     "choose": "Choose",
     "videoExport": "Preferred video export",
     "videoNote": "WebM default. MP4/MOV need WebView encoder support.",
+    "imageExport": "Preferred image export",
+    "imageNote": "PNG is the only supported format.",
     "language": "Language",
     "english": "English",
     "portuguese": "Portuguese"
@@ -75,6 +77,13 @@
       "modelLabel": "TensorFlow.js Coco SSD",
       "modelUrl": "https://www.npmjs.com/package/@tensorflow-models/coco-ssd"
     }
+  },
+  "footer": {
+    "version": "TauriSight v{version}",
+    "versionUrl": "https://github.com/no-tone/taurisight",
+    "copyright": "Copyright © 2026 no-tone - All Rights Reserved",
+    "siteLabel": "no-tone",
+    "siteUrl": "https://no-tone.com"
   },
   "status": {
     "queued": "Queued",

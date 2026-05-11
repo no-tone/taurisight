@@ -47,6 +47,8 @@ struct AppSettings {
     export_folder: Option<PathBuf>,
     #[serde(default = "default_video_export")]
     preferred_video_export: String,
+    #[serde(default = "default_image_export")]
+    preferred_image_export: String,
     #[serde(default = "default_language")]
     language: String,
 }
@@ -56,6 +58,7 @@ impl Default for AppSettings {
         Self {
             export_folder: None,
             preferred_video_export: default_video_export(),
+            preferred_image_export: default_image_export(),
             language: default_language(),
         }
     }
@@ -71,6 +74,7 @@ struct SavedExport {
 struct ClientSettings {
     export_folder: Option<String>,
     preferred_video_export: String,
+    preferred_image_export: String,
     language: String,
 }
 
@@ -151,6 +155,8 @@ fn get_settings(app: AppHandle) -> std::result::Result<ClientSettings, String> {
                 .map(|path| path.to_string_lossy().to_string()),
             preferred_video_export: safe_video_export(&settings.preferred_video_export)
                 .unwrap_or_else(|_| default_video_export()),
+            preferred_image_export: safe_image_export(&settings.preferred_image_export)
+                .unwrap_or_else(|_| default_image_export()),
             language: safe_language(&settings.language).unwrap_or_else(|_| default_language()),
         })
         .map_err(|error| error.to_string())
@@ -160,10 +166,12 @@ fn get_settings(app: AppHandle) -> std::result::Result<ClientSettings, String> {
 fn update_preferences(
     app: AppHandle,
     preferred_video_export: String,
+    preferred_image_export: String,
     language: String,
 ) -> std::result::Result<ClientSettings, String> {
     let mut settings = read_settings(&app).map_err(|error| error.to_string())?;
     settings.preferred_video_export = safe_video_export(&preferred_video_export)?;
+    settings.preferred_image_export = safe_image_export(&preferred_image_export)?;
     settings.language = safe_language(&language)?;
     write_settings(&app, &settings).map_err(|error| error.to_string())?;
     get_settings(app)
@@ -329,6 +337,10 @@ fn default_video_export() -> String {
     "webm".into()
 }
 
+fn default_image_export() -> String {
+    "png".into()
+}
+
 fn default_language() -> String {
     "en".into()
 }
@@ -339,6 +351,13 @@ fn safe_video_export(value: &str) -> std::result::Result<String, String> {
         "mp4" => Ok("mp4".into()),
         "mov" => Ok("mov".into()),
         _ => Err("Unsupported video export type.".into()),
+    }
+}
+
+fn safe_image_export(value: &str) -> std::result::Result<String, String> {
+    match value.to_lowercase().as_str() {
+        "png" => Ok("png".into()),
+        _ => Err("Unsupported image export type.".into()),
     }
 }
 
