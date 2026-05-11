@@ -179,6 +179,6 @@ Note: signed/notarized builds avoid these prompts; release artifacts here are un
 
 ## Trademark Notice
 
-TauriSight, the TauriSight logo, and associated branding are trademarks of no-tone.
+TauriSight, the TauriSight logo, and associated branding are trademarks of [no-tone](https://no-tone.com).
 
 The Apache License 2.0 applies to the source code only and does not grant permission to use project branding, logos, or product identity without permission.
