@@ -326,10 +326,18 @@ kbd {
 .settings-panel {
   min-height: 0;
   overflow: auto;
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
   gap: 7px;
   padding-right: 2px;
+}
+
+.results::-webkit-scrollbar,
+.about-panel::-webkit-scrollbar,
+.settings-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .empty,
@@ -539,10 +547,15 @@ kbd {
   min-height: 28px;
   border: 0;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  color: inherit;
+  background: #171b23;
+  color: #ffffff;
   padding: 0 8px;
   font: inherit;
+}
+
+.select-control option {
+  background: #171b23;
+  color: #ffffff;
 }
 
 .secondary-button:hover {
@@ -585,6 +598,14 @@ kbd {
   color: #ffffff;
 }
 
+.about-list {
+  margin: 0;
+  padding: 0 0 0 16px;
+  color: rgba(246, 247, 249, 0.74);
+  display: grid;
+  gap: 6px;
+}
+
 .md-bullet {
   padding-top: 6px;
   padding-bottom: 6px;
@@ -595,6 +616,19 @@ kbd {
     color: #151820;
     border-color: rgba(0, 0, 0, 0.1);
     background: rgba(242, 244, 247, 0.96);
+  }
+
+  .menu-item,
+  .panel-header h1,
+  .file-name,
+  .detections li,
+  .setting-title,
+  .preview-name {
+    color: #1b2130;
+  }
+
+  .preview-label {
+    color: rgba(21, 24, 32, 0.62);
   }
 
   button:disabled,
@@ -636,10 +670,47 @@ kbd {
 
   .secondary-button {
     background: rgba(0, 0, 0, 0.05);
+    color: #151820;
   }
 
   .select-control {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.9);
+    color: #151820;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+  }
+
+  .select-control option {
+    background: #ffffff;
+    color: #151820;
+  }
+
+  .count,
+  .expand-button,
+  .icon-button,
+  .close-button,
+  .media-thumb,
+  .preview-dot,
+  .back-button {
+    color: rgba(21, 24, 32, 0.72);
+  }
+
+  .count {
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  .status-done {
+    color: #1f8a56;
+  }
+
+  .status-uploading,
+  .status-analyzing {
+    color: #206ea8;
+  }
+
+  .status-error,
+  .error-text,
+  .export-text.missing {
+    color: #b14242;
   }
 
   .warn-badge {
@@ -687,5 +758,9 @@ kbd {
 
   .text-link:hover {
     color: #151820;
+  }
+
+  .about-list {
+    color: rgba(21, 24, 32, 0.68);
   }
 }

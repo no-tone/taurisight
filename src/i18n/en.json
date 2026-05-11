@@ -42,7 +42,30 @@
     "portuguese": "Portuguese"
   },
   "about": {
-    "title": "About"
+    "title": "About",
+    "summary": "Tray-first local utility for image and short video object detection.",
+    "madeByPrefix": "Made by",
+    "modelTitle": "Model",
+    "modelBody": "for local detection of common COCO classes. Files are processed inside the app window.",
+    "workflowTitle": "Workflow",
+    "workflowItems": [
+      "Drop image, MP4, or MOV files to analyze.",
+      "Use Select file (Cmd/Ctrl+O) for picker upload.",
+      "Use clipboard upload (Cmd/Ctrl+Shift+V) for copied images.",
+      "Open Recent uploads (Cmd/Ctrl+Y) to inspect detections and exports."
+    ],
+    "notesTitle": "Notes",
+    "noteItems": [
+      "First run may be slower while model loads.",
+      "Video processing is capped for safer local export.",
+      "Exported files are written to the folder configured in Settings."
+    ],
+    "links": {
+      "siteLabel": "no-tone",
+      "siteUrl": "https://no-tone.com",
+      "modelLabel": "TensorFlow.js Coco SSD",
+      "modelUrl": "https://www.npmjs.com/package/@tensorflow-models/coco-ssd"
+    }
   },
   "status": {
     "queued": "Queued",

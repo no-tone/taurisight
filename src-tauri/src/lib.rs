@@ -4,6 +4,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
+    sync::atomic::{AtomicBool, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 use tauri::{
@@ -29,6 +30,7 @@ const TRAY_QUIT_ID: &str = "tray-quit";
 const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/32x32.png");
 const SETTINGS_FILE: &str = "settings.json";
 const MAX_EXPORT_BYTES: usize = 500 * 1024 * 1024;
+static LAST_DARK_THEME: AtomicBool = AtomicBool::new(true);
 
 type AnyResult<T> = anyhow::Result<T>;
 
@@ -92,22 +94,37 @@ fn update_tray_progress(app: AppHandle, progress: TrayProgress) -> std::result::
         return Ok(());
     };
 
-    if progress.active {
-        let icon = progress_icon(progress.progress, progress.dark);
-        tray.set_icon_with_as_template(Some(icon), false)
-            .map_err(|error| error.to_string())?;
-        tray.set_tooltip(Some(format!(
-            "TauriSight - {} {}%",
-            progress.label, progress.progress
-        )))
-        .map_err(|error| error.to_string())?;
+    LAST_DARK_THEME.store(progress.dark, Ordering::Relaxed);
+
+    let template = cfg!(target_os = "macos");
+
+    let icon = if progress.active {
+        progress_icon(Some(progress.progress), progress.dark)
     } else {
-        let icon = app.default_window_icon().cloned();
-        tray.set_icon_with_as_template(icon, true)
-            .map_err(|error| error.to_string())?;
-        tray.set_tooltip(Some("TauriSight"))
-            .map_err(|error| error.to_string())?;
-    }
+        #[cfg(target_os = "macos")]
+        {
+            app.default_window_icon()
+                .cloned()
+                .unwrap_or_else(|| progress_icon(None, progress.dark))
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            progress_icon(None, LAST_DARK_THEME.load(Ordering::Relaxed))
+        }
+    };
+
+    let tooltip = if progress.active {
+        format!("TauriSight - {} {}%", progress.label, progress.progress)
+    } else {
+        "TauriSight".into()
+    };
+
+    tray.set_icon_with_as_template(Some(icon), template)
+        .map_err(|error| error.to_string())?;
+
+    tray.set_tooltip(Some(tooltip))
+        .map_err(|error| error.to_string())?;
 
     Ok(())
 }
@@ -396,13 +413,12 @@ fn reveal_path(path: &Path) -> AnyResult<()> {
     Ok(())
 }
 
-fn progress_icon(progress: u8, dark: bool) -> Image<'static> {
+fn progress_icon(progress: Option<u8>, dark: bool) -> Image<'static> {
     let size = 32u32;
     let mut image = ::image::load_from_memory(TRAY_ICON_BYTES)
         .map(|image| image.resize_exact(size, size, ::image::imageops::FilterType::Lanczos3))
         .map(|image| image.to_rgba8())
         .unwrap_or_else(|_| ::image::RgbaImage::new(size, size));
-    let fill = ((progress.min(100) as u32) * 24 / 100).max(1);
     let tint = if dark { [246, 247, 249] } else { [18, 20, 24] };
     let track = if dark {
         [246, 247, 249, 72]
@@ -423,15 +439,19 @@ fn progress_icon(progress: u8, dark: bool) -> Image<'static> {
         }
     }
 
-    for y in 27..30 {
-        for x in 4..28 {
-            image.put_pixel(x, y, ::image::Rgba(track));
-        }
-    }
+    if let Some(progress) = progress {
+        let fill = ((progress.min(100) as u32) * 24 / 100).max(1);
 
-    for y in 27..30 {
-        for x in 4..(4 + fill) {
-            image.put_pixel(x, y, ::image::Rgba(bar));
+        for y in 27..30 {
+            for x in 4..28 {
+                image.put_pixel(x, y, ::image::Rgba(track));
+            }
+        }
+
+        for y in 27..30 {
+            for x in 4..(4 + fill) {
+                image.put_pixel(x, y, ::image::Rgba(bar));
+            }
         }
     }
 
@@ -496,6 +516,7 @@ fn size_to_physical(size: Size, scale_factor: f64) -> (f64, f64) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             #[cfg(target_os = "macos")]

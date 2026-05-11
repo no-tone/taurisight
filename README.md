@@ -42,7 +42,7 @@ Made by [no-tone](https://no-tone.com).
 - Latest upload preview in the main tray panel.
 - Tauri tray menu with select file, clipboard upload, recent uploads, about, settings placeholder, and quit.
 - Dynamic tray progress icon using the app icon plus a theme-aware progress bar.
-- Markdown-driven about panel loaded from `public/about.md`.
+- Localized about panel driven by frontend i18n (`src/i18n/*.json`).
 - GitHub Actions release workflow for macOS, Windows, and Linux builds.
 
 ## Project Structure
@@ -50,7 +50,6 @@ Made by [no-tone](https://no-tone.com).
 - `src/App.tsx`: main React UI, file handling, clipboard import, and TensorFlow.js analysis.
 - `src/App.css`: compact native-style UI theme and responsive dark/light styling.
 - `src/i18n/`: frontend translations for supported UI languages.
-- `public/about.md`: Markdown content shown in the in-app About panel.
 - `src-tauri/src/lib.rs`: Tauri tray, window positioning, dock/taskbar behavior, and tray progress icon.
 - `src-tauri/tauri.conf.json`: Tauri app, security, window, and bundle configuration.
 - `src-tauri/icons/`: app and tray icon assets.
@@ -112,8 +111,8 @@ Use `pnpm tauri build` when you want a production binary without running the dev
 Automatic GitHub releases run when a version tag is pushed.
 
 ```bash
-git tag v0.3.0
-git push origin v0.3.0
+git tag v0.3.1
+git push origin v0.3.1
 ```
 
 The workflow can also be started manually from GitHub Actions with `workflow_dispatch`.

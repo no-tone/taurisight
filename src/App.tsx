@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -55,6 +55,8 @@ const SCORE_FORMAT = new Intl.NumberFormat("en-US", {
 const MAX_VIDEO_SECONDS = 45;
 const VIDEO_DETECT_INTERVAL_MS = 500;
 const MAX_EXPORT_SIDE = 960;
+const RECENT_UPLOADS_CACHE_KEY = "taurisight:recent-uploads:v1";
+const MAX_CACHED_UPLOADS = 120;
 
 const isMac = navigator.platform.toLowerCase().includes("mac");
 const selectShortcut = isMac ? "⌘O" : "Ctrl+O";
@@ -78,7 +80,6 @@ function App() {
     fileName: "",
     progress: 0,
   });
-  const [aboutMarkdown, setAboutMarkdown] = useState("");
   const modelRef = useRef<CocoModel | null>(null);
 
   const setTrayProgress = useCallback((active: boolean, progress: number, label: string) => {
@@ -397,6 +398,44 @@ function App() {
       .catch(() => setTranslations(enTranslations));
   }, [language]);
 
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(RECENT_UPLOADS_CACHE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const restored = parsed
+        .map(restoreCachedItem)
+        .filter((item): item is ProcessedItem => item !== null)
+        .sort((left, right) => right.createdAt - left.createdAt);
+
+      if (restored.length > 0) {
+        setItems(restored);
+      }
+    } catch {
+      // Ignore broken cache entries and continue with empty list.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const cacheable = items
+        .filter((item) => item.status === "done" || item.status === "error")
+        .slice(0, MAX_CACHED_UPLOADS)
+        .map(toCachedItem);
+
+      window.localStorage.setItem(RECENT_UPLOADS_CACHE_KEY, JSON.stringify(cacheable));
+    } catch {
+      // Ignore persistence failures in restricted environments.
+    }
+  }, [items]);
+
   // Ensure dropzone hint uses current translations on initial load
   // without overwriting transient hints while uploading/dragging.
   useEffect(() => {
@@ -482,14 +521,9 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClipboard, open, t.errors.aboutUnavailable]);
+  }, [handleClipboard, open]);
 
   useEffect(() => {
-    fetch("/about.md")
-      .then((response) => response.text())
-      .then(setAboutMarkdown)
-      .catch(() => setAboutMarkdown(t.errors.aboutUnavailable));
-
     const listeners = [
       listen("show-about", () => setView("about")),
       listen("show-settings", () => setView("settings")),
@@ -625,18 +659,64 @@ function App() {
       )}
 
       {view === "about" && (
-        <section className="panel">
-          <header className="panel-header">
-            <div>
-              <p className="eyebrow">TauriSight</p>
-              <h1>{t.about.title}</h1>
-            </div>
-          </header>
-
-          <div className="about-panel">{renderMarkdown(aboutMarkdown)}</div>
-        </section>
+        <AboutPanel t={t} />
       )}
     </main>
+  );
+}
+
+function AboutPanel({ t }: { t: Translations }) {
+  return (
+    <section className="panel">
+      <header className="panel-header">
+        <div>
+          <p className="eyebrow">TauriSight</p>
+          <h1>{t.about.title}</h1>
+        </div>
+      </header>
+
+      <div className="about-panel">
+        <p>{t.about.summary}</p>
+        <p>
+          {t.about.madeByPrefix}{" "}
+          <button
+            className="text-link"
+            type="button"
+            onClick={() => openUrl(t.about.links.siteUrl)}
+          >
+            {t.about.links.siteLabel}
+          </button>
+          .
+        </p>
+
+        <h2>{t.about.modelTitle}</h2>
+        <p>
+          <button
+            className="text-link"
+            type="button"
+            onClick={() => openUrl(t.about.links.modelUrl)}
+          >
+            {t.about.links.modelLabel}
+          </button>
+          {" "}
+          {t.about.modelBody}
+        </p>
+
+        <h2>{t.about.workflowTitle}</h2>
+        <ul className="about-list">
+          {t.about.workflowItems.map((item, index) => (
+            <li key={`workflow-${index}`}>{item}</li>
+          ))}
+        </ul>
+
+        <h2>{t.about.notesTitle}</h2>
+        <ul className="about-list">
+          {t.about.noteItems.map((item, index) => (
+            <li key={`notes-${index}`}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -1098,85 +1178,65 @@ function loadVideo(src: string, t: Translations) {
   });
 }
 
-function renderMarkdown(markdown: string) {
-  return markdown.split("\n").map((line, index) => {
-    if (line.startsWith("# ")) {
-      return <h2 key={index}>{renderInlineMarkdown(line.slice(2))}</h2>;
-    }
-
-    if (line.startsWith("## ")) {
-      return <h3 key={index}>{renderInlineMarkdown(line.slice(3))}</h3>;
-    }
-
-    if (line.startsWith("- ")) {
-      return (
-        <p key={index} className="md-bullet">
-          • {renderInlineMarkdown(line.slice(2))}
-        </p>
-      );
-    }
-
-    if (!line.trim()) {
-      return null;
-    }
-
-    return <p key={index}>{renderInlineMarkdown(line)}</p>;
-  });
+function toCachedItem(item: ProcessedItem) {
+  return {
+    id: item.id,
+    batchId: item.batchId,
+    name: item.name,
+    kind: item.kind,
+    status: item.status,
+    predictions: item.predictions.map((prediction) => ({
+      class: prediction.class,
+      score: prediction.score,
+      bbox: prediction.bbox,
+    })),
+    dimensions: item.dimensions,
+    exportPath: item.exportPath,
+    exportName: item.exportName,
+    exportExists: item.exportExists,
+    error: item.error,
+    createdAt: item.createdAt,
+  };
 }
 
-function renderInlineMarkdown(text: string) {
-  const segments: ReactNode[] = [];
-  const pattern = /(\[[^\]]+\]\([^)]+\)|`[^`]+`)/g;
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > cursor) {
-      segments.push(text.slice(cursor, match.index));
-    }
-
-    const token = match[0];
-    const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-
-    if (linkMatch) {
-      const [, label, href] = linkMatch;
-      const safeHref = safeExternalUrl(href);
-
-      segments.push(
-        safeHref ? (
-          <button
-            className="text-link"
-            key={`${match.index}-${href}`}
-            type="button"
-            onClick={() => openUrl(safeHref)}
-          >
-            {label}
-          </button>
-        ) : (
-          label
-        ),
-      );
-    } else if (token.startsWith("`") && token.endsWith("`")) {
-      segments.push(<code key={match.index}>{token.slice(1, -1)}</code>);
-    }
-
-    cursor = match.index + token.length;
-  }
-
-  if (cursor < text.length) {
-    segments.push(text.slice(cursor));
-  }
-
-  return segments.length > 0 ? segments : text;
-}
-
-function safeExternalUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    return ["https:", "http:", "mailto:"].includes(parsed.protocol) ? parsed.toString() : null;
-  } catch {
+function restoreCachedItem(input: unknown): ProcessedItem | null {
+  if (!input || typeof input !== "object") {
     return null;
   }
+
+  const candidate = input as Partial<ProcessedItem>;
+  if (!candidate.id || !candidate.name || !candidate.batchId) {
+    return null;
+  }
+
+  const predictions = Array.isArray(candidate.predictions)
+    ? candidate.predictions.filter(
+        (prediction): prediction is Prediction =>
+          typeof prediction === "object" &&
+          prediction !== null &&
+          typeof prediction.class === "string" &&
+          typeof prediction.score === "number" &&
+          Array.isArray(prediction.bbox),
+      )
+    : [];
+
+  const status: ItemStatus =
+    candidate.status === "done" || candidate.status === "error" ? candidate.status : "error";
+
+  return {
+    id: candidate.id,
+    batchId: candidate.batchId,
+    name: candidate.name,
+    kind: candidate.kind === "video" ? "video" : "image",
+    status,
+    predictions,
+    dimensions: typeof candidate.dimensions === "string" ? candidate.dimensions : undefined,
+    exportPath: typeof candidate.exportPath === "string" ? candidate.exportPath : undefined,
+    exportName: typeof candidate.exportName === "string" ? candidate.exportName : undefined,
+    exportExists: typeof candidate.exportExists === "boolean" ? candidate.exportExists : undefined,
+    error: typeof candidate.error === "string" ? candidate.error : undefined,
+    createdAt: typeof candidate.createdAt === "number" ? candidate.createdAt : Date.now(),
+  };
 }
 
 function delay(ms: number) {

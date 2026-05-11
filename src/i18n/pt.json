@@ -42,7 +42,30 @@
     "portuguese": "Português"
   },
   "about": {
-    "title": "Sobre"
+    "title": "Sobre",
+    "summary": "Utilitário local com foco em bandeja para deteção de objetos em imagem e vídeo curto.",
+    "madeByPrefix": "Criado por",
+    "modelTitle": "Modelo",
+    "modelBody": "para deteção local de classes COCO comuns. Os ficheiros são processados dentro da janela da app.",
+    "workflowTitle": "Fluxo",
+    "workflowItems": [
+      "Arraste ficheiros de imagem, MP4 ou MOV para analisar.",
+      "Use Selecionar ficheiro (Cmd/Ctrl+O) para escolher ficheiro.",
+      "Use upload da área de transferência (Cmd/Ctrl+Shift+V) para imagens copiadas.",
+      "Abra Uploads recentes (Cmd/Ctrl+Y) para ver deteções e exportações."
+    ],
+    "notesTitle": "Notas",
+    "noteItems": [
+      "Primeira execução pode ser mais lenta enquanto o modelo carrega.",
+      "Processamento de vídeo é limitado para exportação local mais segura.",
+      "Ficheiros exportados são guardados na pasta configurada em Definições."
+    ],
+    "links": {
+      "siteLabel": "no-tone",
+      "siteUrl": "https://no-tone.com",
+      "modelLabel": "TensorFlow.js Coco SSD",
+      "modelUrl": "https://www.npmjs.com/package/@tensorflow-models/coco-ssd"
+    }
   },
   "status": {
     "queued": "À espera",
