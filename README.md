@@ -178,3 +178,9 @@ Note: signed/notarized builds avoid these prompts; release artifacts here are un
 - Coco SSD model assets are fetched from TensorFlow-hosted storage at runtime.
 - Clipboard image import depends on operating system and webview permissions.
 - Release builds are unsigned unless signing and notarization are configured separately.
+
+## Trademark Notice
+
+TauriSight, the TauriSight logo, and associated branding are trademarks of no-tone.
+
+The Apache License 2.0 applies to the source code only and does not grant permission to use project branding, logos, or product identity without permission.
