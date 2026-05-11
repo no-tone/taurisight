@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src-tauri/icons/icon.png" alt="TauriSight" width="128" style="filter: invert(1);" />
+<img src="public/icon.png" alt="TauriSight" width="128"/>
 
 # TauriSight
 
