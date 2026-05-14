@@ -75,7 +75,7 @@ const MAX_CACHED_UPLOADS = 120;
 
 const isMac = navigator.platform.toLowerCase().includes("mac");
 const selectShortcut = isMac ? "⌘O" : "Ctrl+O";
-const clipboardShortcut = isMac ? "⌘⇧V" : "Ctrl+Shift+V";
+const clipboardShortcut = isMac ? "⌘V" : "Ctrl+V";
 const recentShortcut = isMac ? "⌘Y" : "Ctrl+Y";
 const quitShortcut = isMac ? "⌘Q" : "Alt+F4";
 
@@ -657,11 +657,6 @@ function App() {
         open();
       }
 
-      if (mod && event.shiftKey && key === "v") {
-        event.preventDefault();
-        handleClipboard();
-      }
-
       if (mod && key === "y") {
         event.preventDefault();
         setView("recent");
@@ -710,7 +705,7 @@ function App() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("paste", handlePaste);
     };
-  }, [handleClipboard, open, analyzeFiles]);
+  }, [open, analyzeFiles]);
 
   useEffect(() => {
     const listeners = [

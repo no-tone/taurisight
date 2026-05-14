@@ -62,7 +62,7 @@
     "workflowItems": [
       "Drop image, MP4, or MOV files to analyze.",
       "Use Select file (Cmd/Ctrl+O) for picker upload.",
-      "Use clipboard upload (Cmd/Ctrl+Shift+V) for copied images.",
+      "Use clipboard upload (Cmd/Ctrl+V) for copied images.",
       "Open Recent uploads (Cmd/Ctrl+Y) to inspect detections and exports."
     ],
     "notesTitle": "Notes",

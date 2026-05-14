@@ -566,7 +566,7 @@ pub fn run() {
                         TRAY_CLIPBOARD_ID,
                         "Upload from clipboard",
                         true,
-                        Some("CmdOrCtrl+Shift+V"),
+                        Some("CmdOrCtrl+V"),
                     )?,
                     &MenuItem::with_id(
                         app,

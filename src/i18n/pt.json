@@ -62,7 +62,7 @@
     "workflowItems": [
       "Arraste ficheiros de imagem, MP4 ou MOV para analisar.",
       "Use Selecionar ficheiro (Cmd/Ctrl+O) para escolher ficheiro.",
-      "Use upload da área de transferência (Cmd/Ctrl+Shift+V) para imagens copiadas.",
+      "Use upload da área de transferência (Cmd/Ctrl+V) para imagens copiadas.",
       "Abra Uploads recentes (Cmd/Ctrl+Y) para ver deteções e exportações."
     ],
     "notesTitle": "Notas",
