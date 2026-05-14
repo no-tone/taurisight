@@ -95,6 +95,7 @@
   "errors": {
     "aboutUnavailable": "About file unavailable.",
     "clipboardUnavailable": "Clipboard image unavailable.",
+    "clipboardPermission": "Clipboard access denied. Check system permissions.",
     "mediaFailed": "Failed to analyze media.",
     "videoDuration": "Video duration unavailable.",
     "videoTooLong": "Video too long. Max {seconds}s for safe local export.",

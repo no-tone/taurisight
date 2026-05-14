@@ -304,7 +304,6 @@ function App() {
           );
 
           objectUrl = URL.createObjectURL(file);
-          await delay(80);
 
           updateActivity("analyzing", file.name, 35);
           setItems((prev) =>
@@ -406,7 +405,11 @@ function App() {
       }
 
       await analyzeFiles(files);
-    } catch {
+    } catch (err) {
+      let message = t.errors.clipboardUnavailable;
+      if (err instanceof Error && err.name === "NotAllowedError") {
+        message = t.errors.clipboardPermission;
+      }
       const id = crypto.randomUUID();
       setItems((prev) => [
         {
@@ -416,13 +419,13 @@ function App() {
           kind: "image",
           status: "error",
           predictions: [],
-          error: t.errors.clipboardUnavailable,
+          error: message,
           createdAt: Date.now(),
         },
         ...prev,
       ]);
     }
-  }, [analyzeFiles]);
+  }, [analyzeFiles, t.errors.clipboardUnavailable, t.errors.clipboardPermission]);
 
   const chooseExportFolder = useCallback(async () => {
     const folder = await invoke<string | null>("choose_export_folder");
@@ -642,7 +645,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [items.length, view]);
+  }, [items.length]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -680,9 +683,34 @@ function App() {
       }
     };
 
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const ext = item.type.split("/")[1] ?? "png";
+            files.push(new File([blob], `paste-image.${ext}`, { type: item.type }));
+          }
+        }
+      }
+
+      if (files.length > 0) {
+        event.preventDefault();
+        void analyzeFiles(files);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClipboard, open]);
+    window.addEventListener("paste", handlePaste);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("paste", handlePaste);
+    };
+  }, [handleClipboard, open, analyzeFiles]);
 
   useEffect(() => {
     const listeners = [
@@ -1596,10 +1624,6 @@ function restoreCachedItem(input: unknown): ProcessedItem | null {
         ? candidate.createdAt
         : Date.now(),
   };
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export default App;

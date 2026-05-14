@@ -95,6 +95,7 @@
   "errors": {
     "aboutUnavailable": "Ficheiro About indisponível.",
     "clipboardUnavailable": "Imagem da área de transferência indisponível.",
+    "clipboardPermission": "Acesso à área de transferência negado. Verifique as permissões do sistema.",
     "mediaFailed": "Falha ao analisar ficheiro.",
     "videoDuration": "Duração do vídeo indisponível.",
     "videoTooLong": "Vídeo demasiado longo. Máximo {seconds}s para exportação local segura.",
